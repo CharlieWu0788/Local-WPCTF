@@ -47,18 +47,16 @@ def scan_wordpress(url):
         evidence_list.append("wp-includes found")
 
     # Look for a meta generator tag containing 'wordpress' in its content
-    generator_found = False
-    for meta_tag in soup.find_all('meta'):
-        name = meta_tag.get('name', '')
-        content = meta_tag.get('content', '')
+    generator = soup.find("meta",attrs={"name": "generator"})
+    if generator:
+        name = generator.get('name', '')
+        content = generator.get('content', '')
         if name.lower() == "generator":
             if 'wordpress' in content.lower():
                 evidence_list.append("generator tag found")
-                generator_found = True
-                break  # Found one, no need to check further
 
     # Determine if any evidence of WordPress was found
-    wordpress_detected = len(evidence_list) > 0
+    wordpress_detected = len(evidence_list) >= 2
 
     return {
         'wordpress_detected': wordpress_detected,
