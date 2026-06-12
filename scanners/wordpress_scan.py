@@ -39,7 +39,11 @@ def scan_wordpress(url):
             if 'wordpress' in content.lower():
                 evidence_list.append("generator tag found")
 
-    wordpress_detected = len(evidence_list) >= 2
+    wordpress_detected = any([
+        "wp-content found" in evidence_list,
+        "wp-includes found" in evidence_list,
+        "generator tag found" in evidence_list
+    ])
 
     return {
         'wordpress_detected': wordpress_detected,

@@ -43,8 +43,9 @@ A lightweight local WordPress CTF reconnaissance framework for detecting attack 
 
 ### 1. Configure target
 
-```json
 Edit 'Config.json':
+
+```json
 {
   "url": "http://localhost:8081"
 }
