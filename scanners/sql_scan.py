@@ -3,22 +3,6 @@ from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 
 def scan_sql_injection(url):
-    """
-    Basic SQL Injection reconnaissance scanner.
-
-    Detection methods:
-    - Baseline response comparison
-    - SQL error message detection
-    - Response length differences
-    - HTTP status code changes
-
-    Returns:
-        {
-            "sql_injection_detected": bool,
-            "evidence": list,
-            "tested_payloads": list
-        }
-    """
 
     PAYLOADS = [
         "'",

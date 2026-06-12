@@ -3,18 +3,6 @@ from urllib.parse import urljoin
 
 
 def scan_login_page(url):
-    """
-    Detect common WordPress authentication endpoints.
-
-    Returns:
-        {
-            "login_page_found": bool,
-            "login_url": str | None,
-            "status_code": int | None,
-            "evidence": list,
-            "error": str | None
-        }
-    """
 
     LOGIN_PATHS = [
         "/wp-login.php",

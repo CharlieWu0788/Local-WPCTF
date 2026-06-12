@@ -1,4 +1,4 @@
-# Qwen-WPCTF
+# Local-WPCTF
 
 A lightweight WordPress security testing framework.
 

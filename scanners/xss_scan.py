@@ -94,7 +94,6 @@ def scan_xss(url):
 
                     response_text = test_response.text
 
-                    # 未转义反射（高风险）
                     if payload in response_text:
 
                         detected = True
@@ -103,7 +102,6 @@ def scan_xss(url):
                             f"Unescaped payload reflected at {target_url}"
                         )
 
-                    # 内容被反射但可能被HTML编码
                     elif "alert(1)" in response_text:
 
                         evidence.append(
