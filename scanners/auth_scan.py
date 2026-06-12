@@ -1,7 +1,15 @@
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
+def normalize_login_url(url):
+    parsed = urlparse(url)
+
+    return (
+        f"{parsed.scheme}://"
+        f"{parsed.netloc}"
+        f"{parsed.path}"
+    )
 
 def scan_login_page(url):
     """
@@ -39,11 +47,16 @@ def scan_login_page(url):
                 continue
 
             full_url = urljoin(url, href)
+            normalized_url = normalize_login_url(
+                full_url
+            )
+
             lower_href = href.lower()
 
             # keyword match in href or text
-            if any(keyword in lower_href or keyword in text for keyword in LOGIN_KEYWORDS):
-                login_urls.add(full_url)
+            if any(keyword in lower_href or keyword in text
+                for keyword in LOGIN_KEYWORDS):
+                    login_urls.add(normalized_url)
 
         # ----------------------------
         # Step 2: Validate candidates
