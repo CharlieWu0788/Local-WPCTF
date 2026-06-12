@@ -1,67 +1,103 @@
 import requests
+from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
 
 def scan_login_page(url):
+    """
+    Hybrid authentication page scanner:
+    - Generic login discovery (CMS-agnostic)
+    - Optional WordPress fallback detection
+    """
 
-    LOGIN_PATHS = [
-        "/wp-login.php",
-        "/wp-admin"
+    LOGIN_KEYWORDS = [
+        "login",
+        "log in",
+        "sign in",
+        "signin",
+        "auth",
+        "account"
     ]
 
     evidence = []
+    detected = False
+    login_urls = set()
 
-    for path in LOGIN_PATHS:
+    try:
+        response = requests.get(url, timeout=10, allow_redirects=True)
+        soup = BeautifulSoup(response.text, "html.parser")
 
-        target_url = urljoin(url, path)
+        # ----------------------------
+        # Step 1: Generic link discovery
+        # ----------------------------
+        for a_tag in soup.find_all("a"):
 
-        try:
-            response = requests.get(
-                target_url,
-                allow_redirects=True,
-                timeout=10
-            )
+            href = a_tag.get("href")
+            text = (a_tag.text or "").lower()
 
-            response_text = response.text.lower()
+            if not href:
+                continue
 
-            if (
-                "wordpress" in response_text
-                and "login" in response_text
-            ):
-                evidence.append(
-                    f"WordPress login page detected at {response.url}"
-                )
+            full_url = urljoin(url, href)
+            lower_href = href.lower()
 
-                return {
-                    "login_page_found": True,
-                    "login_url": response.url,
-                    "status_code": response.status_code,
-                    "evidence": evidence,
-                    "error": None
-                }
+            # keyword match in href or text
+            if any(keyword in lower_href or keyword in text for keyword in LOGIN_KEYWORDS):
+                login_urls.add(full_url)
 
-            if "user_login" in response_text:
-                evidence.append(
-                    f"WordPress login form detected at {response.url}"
-                )
+        # ----------------------------
+        # Step 2: Validate candidates
+        # ----------------------------
+        for login_url in login_urls:
 
-                return {
-                    "login_page_found": True,
-                    "login_url": response.url,
-                    "status_code": response.status_code,
-                    "evidence": evidence,
-                    "error": None
-                }
+            try:
+                r = requests.get(login_url, timeout=10, allow_redirects=True)
+                content = r.text.lower()
 
-        except requests.RequestException as e:
-            evidence.append(
-                f"Failed to access {target_url}: {str(e)}"
-            )
+                # generic login indicators
+                if (
+                    "password" in content
+                    or "username" in content
+                    or "login" in content
+                    or "sign in" in content
+                ):
+                    detected = True
+                    evidence.append(
+                        f"Login page detected at {r.url}"
+                    )
 
-    return {
-        "login_page_found": False,
-        "login_url": None,
-        "status_code": None,
-        "evidence": evidence,
-        "error": None
-    }
+                # WordPress fallback heuristic (optional enhancement)
+                if "wordpress" in content and "wp-login" in r.url:
+                    evidence.append(
+                        f"WordPress login endpoint confirmed at {r.url}"
+                    )
+                    detected = True
+
+            except requests.RequestException as e:
+                evidence.append(f"Failed to access {login_url}: {str(e)}")
+
+        # ----------------------------
+        # Step 3: direct fallback (light CMS heuristic)
+        # ----------------------------
+        if not login_urls:
+            # fallback heuristic scan (still generic)
+            if "login" in response.text.lower():
+                evidence.append("Login keyword found in homepage content (no explicit link)")
+                detected = True
+
+        return {
+            "login_page_found": detected,
+            "login_urls": list(login_urls) if login_urls else None,
+            "final_url": response.url,
+            "evidence": evidence,
+            "error": None
+        }
+
+    except requests.RequestException as e:
+        return {
+            "login_page_found": False,
+            "login_urls": None,
+            "final_url": None,
+            "evidence": [],
+            "error": str(e)
+        }

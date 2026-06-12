@@ -4,16 +4,27 @@ A lightweight local WordPress CTF reconnaissance framework for detecting attack 
 
 ---
 
-## ⚡ Features (v0.1.0)
+## ⚡ Features (v0.1.1)
 
 - WordPress detection
-- Login page discovery (`/wp-login.php`, `/wp-admin`)
+- Generic authentication page discovery
+- Login endpoint identification through link analysis and keyword matching
 - Basic SQL injection reconnaissance (parameter-based)
 - Basic reflected XSS detection (form-based)
 - Unified JSON reporting
 - Modular scanner architecture
 
 ---
+
+## 📊 Module Explaination
+| Module         | Purpose                                                                        |
+|----------------|--------------------------------------------------------------------------------|
+| wordpress_scan | Detect WordPress installations through common fingerprints                     |
+| auth_scan      | Discover authentication surfaces using link analysis and login-page heuristics |
+| sql_scan       | Perform basic SQL injection reconnaissance                                     |
+| xss_scan       | Perform basic reflected XSS reconnaissance                                     |
+
+
 
 ## 📁 Project Structure
 .gitignore
