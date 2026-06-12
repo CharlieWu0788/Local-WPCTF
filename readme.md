@@ -24,44 +24,41 @@ A lightweight local WordPress CTF reconnaissance framework for detecting attack 
 | sql_scan       | Perform basic SQL injection reconnaissance                                     |
 | xss_scan       | Perform basic reflected XSS reconnaissance                                     |
 
-
+---
 
 ## 📁 Project Structure
-.gitignore
-│  config.json
-│  main.py
-│  readme.md
-│  requirements.txt
-│  
-├─reports
-│      json_report.py
-│      
-└─scanners
-    │  auth_scan.py
-    │  sql_scan.py
-    │  wordpress_scan.py
-    │  xss_scan.py
-    │  
-    └─__pycache__
-
+| Directory | Description |
+|------------|------------|
+| main.py | Entry point |
+| config.json | Target configuration |
+| reports/json_report.py | JSON reporting module |
+| scanners/wordpress_scan.py | WordPress detection |
+| scanners/auth_scan.py | Authentication discovery |
+| scanners/sql_scan.py | SQL injection reconnaissance |
+| scanners/xss_scan.py | XSS reconnaissance |
 
 ---
 
 ## 🚀 Usage
 
 ### 1. Configure target
-//json
+
+```json
 Edit 'Config.json':
 {
   "url": "http://localhost:8081"
 }
+```
 
 ### 2. Run scanner
-//bash
+
+```bash
 python main.py
+```
 
 ### 3. Example output
-//json
+
+```json
 {
   "wordpress": {
     "wordpress_detected": true,
@@ -95,19 +92,27 @@ python main.py
     "tested_payloads": ["<script>alert(1)</script>"]
   }
 }
+```
 
-🧠 Architecture
+## 🧠 Architecture
+
+```text
+config.json
+     ↓
 main.py
-   ↓
+     ↓
 scanner modules
-   ↓
+     ↓
 structured results
-   ↓
+     ↓
 JSON output
+```
 
 Each scanner is independent and returns a standardized dictionary.
 
 🧪 Tested Environment
+```text
 Local Docker WordPress
 Apache / Nginx WordPress installations
 Default themes (Twenty series)
+```
