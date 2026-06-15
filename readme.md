@@ -2,17 +2,20 @@
 
 A lightweight local WordPress security testing framework that combines reconnaissance, attack surface modeling, test plan generation, and OWASP-based classification.
 
-It is designed to detect and organize web attack surfaces including authentication endpoints, SQL injection points, XSS vectors, and WordPress-specific misconfigurations.
+It is designed to identify and organize web attack surfaces including authentication endpoints, SQL injection points, XSS vectors, and WordPress-specific misconfigurations.
 
 ---
 
-## ⚡ Features (v0.3.0)
+## ⚡ Features (v0.3.1)
 
 ### Scanner Layer
 
 * WordPress detection
-* Generic authentication page discovery
-* Login endpoint identification through link analysis and keyword matching
+* Hybrid authentication surface discovery
+  - Link-based discovery
+  - Endpoint probing (e.g., /wp-login.php)
+  - Form-based login detection
+  - Validation-based confirmation
 * Basic SQL injection reconnaissance (parameter-based)
 * Basic reflected XSS detection (form-based)
 
@@ -27,7 +30,7 @@ It is designed to detect and organize web attack surfaces including authenticati
 
 ---
 
-### Security Classification Layer (NEW)
+### Security Classification Layer
 
 * OWASP Top 10 mapping for generated test cases
 * Structured vulnerability categorization
@@ -38,8 +41,9 @@ It is designed to detect and organize web attack surfaces including authenticati
 
 ### Reporting Layer
 
-* Unified JSON reporting
-* OWASP-aligned structured output format
+* Unified JSON output
+* Structured security findings format
+* OWASP-aligned result mapping
 
 ---
 
@@ -47,51 +51,65 @@ It is designed to detect and organize web attack surfaces including authenticati
 
 | Module         | Purpose |
 | -------------- | --------|
-| wordpress_scan | Detect WordPress installations through common fingerprints |
-| auth_scan      | Discover authentication surfaces using link analysis and login-page heuristics |
-| sql_scan       | Perform basic SQL injection reconnaissance |
-| xss_scan       | Perform basic reflected XSS reconnaissance |
-| attack_surface | Convert scanner outputs into attack surface entries |
-| test_plan      | Generate testing tasks from identified attack surfaces |
-| owasp_mapper   | Map generated test cases to OWASP Top 10 categories |
-
----
-
-## 📁 Project Structure
-
-| Directory                  | Description |
-| -------------------------- | ----------- |
-| main.py                    | Entry point |
-| config.json                | Target configuration |
-| scanners/wordpress_scan.py | WordPress detection |
-| scanners/auth_scan.py      | Authentication discovery |
-| scanners/sql_scan.py       | SQL injection reconnaissance |
-| scanners/xss_scan.py       | XSS reconnaissance |
-| workflow/attack_surface.py | Attack surface modeling |
-| workflow/test_plan.py      | Security test plan generation |
-| reports/owasp_mapper.py    | OWASP classification mapping |
+| wordpress_scan | Detect WordPress installations through fingerprinting |
+| auth_scan      | Hybrid authentication discovery engine |
+| sql_scan       | Basic SQL injection reconnaissance |
+| xss_scan       | Basic reflected XSS reconnaissance |
+| attack_surface | Convert scan results into structured attack surfaces |
+| test_plan      | Generate test cases from attack surfaces |
+| owasp_mapper   | Map test cases to OWASP Top 10 categories |
 
 ---
 
 ## 🧠 Architecture
 
 ```text
-config.json
-     ↓
-scanner modules
-     ↓
-attack surface modeling
-     ↓
-test plan generation
-     ↓
-OWASP Top 10 classification
-     ↓
-structured security findings
-     ↓
-JSON output
+Target URL
+    ↓
+Scanner Layer
+    ├── WordPress Scan
+    ├── Auth Scan (Hybrid Engine)
+    ├── SQL Scan
+    └── XSS Scan
+    ↓
+Attack Surface Modeling
+    ↓
+Test Plan Generation
+    ↓
+OWASP Top 10 Classification
+    ↓
+Structured JSON Output
 ```
 
-The framework now extends beyond reconnaissance and test generation, introducing a classification layer that maps security tests to OWASP Top 10 categories for structured vulnerability analysis.
+The framework now supports hybrid authentication discovery by combining link analysis, form-based detection, and endpoint probing to improve coverage of real-world login surfaces.
+
+---
+
+## 📁 Project Structure
+
+```
+Local WPCTF/
+
+├── main.py
+├── config.json
+│
+├── scanners/
+│   ├── wordpress_scan.py
+│   ├── auth_scan.py
+│   ├── sql_scan.py
+│   ├── xss_scan.py
+│   └── __init__.py
+│
+├── workflow/
+│   ├── attack_surface.py
+│   ├── test_plan.py
+│   └── __init__.py
+│
+├── reports/
+│   └── owasp_mapper.py
+│
+└── README.md
+```
 
 ---
 
@@ -108,22 +126,29 @@ The framework now extends beyond reconnaissance and test generation, introducing
 
 * Attack surface modeling
 * Test plan generation
-* Authentication surface normalization
+* Basic workflow orchestration
 
-### v0.3.0 (CURRENT)
+### v0.3.0
 
 * OWASP Top 10 classification
-* Security test categorization
-* Structured vulnerability reporting
+* Structured security findings
 
-### v0.3.1 (Planned)
+### v0.3.1 (CURRENT)
 
-* Improved authentication discovery
-* Generic login form detection
-* Reduced CMS-specific heuristics
+* Hybrid authentication discovery engine
+* Endpoint probing for login surfaces
+* Form-based login detection
+* Improved authentication validation logic
 
-### Future
+### v0.4.0 (Planned)
 
-* Attack chain analysis
-* Remediation guidance
-* Automated retesting
+* JSON report generator
+* Persistent output files
+* Structured export pipeline
+
+---
+
+## 📌 Notes
+
+This version significantly improves authentication surface coverage by combining multiple discovery strategies, reducing reliance on CMS-specific assumptions while maintaining compatibility with WordPress environments.
+```
