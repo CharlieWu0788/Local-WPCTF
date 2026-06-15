@@ -11,7 +11,7 @@ def normalize_login_url(url):
         f"{parsed.path}"
     )
 
-def scan_login_page(url):
+def scan_authentication(url):
     """
     Hybrid authentication page scanner:
     - Generic login discovery (CMS-agnostic)
