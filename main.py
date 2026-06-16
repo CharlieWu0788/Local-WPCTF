@@ -1,3 +1,4 @@
+import os
 import json
 import sys
 
@@ -10,6 +11,7 @@ from workflow.attack_surface import build_attack_surface
 from workflow.test_plan import generate_test_plan
 
 from reports.owasp_mapper import classify_test_plan
+from reports.json_report import generate_report
 
 
 def main():
@@ -59,14 +61,45 @@ def main():
     print("[*] Mapping to OWASP Top 10...")
     owasp_report = classify_test_plan(test_plan)
 
-    results = {
-        "attack_surface": attack_surface,
-        "test_plan": test_plan,
-        "owasp": owasp_report["owasp"]
-    }
+    report = generate_report(
+        url,
+        attack_surface,
+        test_plan,
+        owasp_report["owasp"]
+    )
 
-    print(json.dumps(results, indent=4))
+    print("\n[*] Generating standardized report...\n")
+
+    print(
+        json.dumps(
+            report,
+            indent=4
+        )
+    )
+
+    os.makedirs(
+        "output",
+        exist_ok=True
+    )
+
+    with open(
+        "output/report.json",
+        "w",
+        encoding="utf-8"
+    ) as f:
+
+        json.dump(
+            report,
+            f,
+            indent=4,
+            ensure_ascii=False
+        )
+
+    print(
+        "\n[+] Report saved to report.json"
+    )
 
 
 if __name__ == "__main__":
     main()
+

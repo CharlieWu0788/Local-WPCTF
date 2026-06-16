@@ -6,7 +6,7 @@ It is designed to identify and organize web attack surfaces including authentica
 
 ---
 
-## ⚡ Features (v0.3.1)
+## ⚡ Features (v0.4.0)
 
 ### Scanner Layer
 
@@ -41,6 +41,16 @@ It is designed to identify and organize web attack surfaces including authentica
 
 ### Reporting Layer
 
+* Standardized security assessment report generation
+* Report metadata and scan information
+* Summary statistics
+* Persistent JSON report export
+* Unified workflow output structure
+
+---
+
+### Reporting Layer
+
 * Unified JSON output
 * Structured security findings format
 * OWASP-aligned result mapping
@@ -58,6 +68,8 @@ It is designed to identify and organize web attack surfaces including authentica
 | attack_surface | Convert scan results into structured attack surfaces |
 | test_plan      | Generate test cases from attack surfaces |
 | owasp_mapper   | Map test cases to OWASP Top 10 categories |
+| json_report    | Generate standardized security assessment reports |
+
 
 ---
 
@@ -67,10 +79,6 @@ It is designed to identify and organize web attack surfaces including authentica
 Target URL
     ↓
 Scanner Layer
-    ├── WordPress Scan
-    ├── Auth Scan (Hybrid Engine)
-    ├── SQL Scan
-    └── XSS Scan
     ↓
 Attack Surface Modeling
     ↓
@@ -78,7 +86,9 @@ Test Plan Generation
     ↓
 OWASP Top 10 Classification
     ↓
-Structured JSON Output
+Standardized Reporting
+    ↓
+JSON Export
 ```
 
 The framework now supports hybrid authentication discovery by combining link analysis, form-based detection, and endpoint probing to improve coverage of real-world login surfaces.
@@ -106,7 +116,9 @@ Local WPCTF/
 │   └── __init__.py
 │
 ├── reports/
-│   └── owasp_mapper.py
+│   ├── owasp_mapper.py
+│   ├── json_report.py
+│   └── __init__.py
 │
 └── README.md
 ```
@@ -133,18 +145,28 @@ Local WPCTF/
 * OWASP Top 10 classification
 * Structured security findings
 
-### v0.3.1 (CURRENT)
+### v0.3.1 
 
 * Hybrid authentication discovery engine
 * Endpoint probing for login surfaces
 * Form-based login detection
 * Improved authentication validation logic
 
-### v0.4.0 (Planned)
+### v0.4.0
 
-* JSON report generator
-* Persistent output files
-* Structured export pipeline
+* Standardized report generation
+* Security assessment metadata
+* Summary statistics
+* Persistent JSON export
+
+---
+
+### v0.5.0 (Planned)
+
+* Function discovery
+* Business functionality identification
+* Enhanced attack surface enrichment
+* Context-aware test planning
 
 ---
 

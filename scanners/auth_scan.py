@@ -46,7 +46,7 @@ def scan_authentication(url):
     login_urls = set()
 
     try:
-        response = requests.get(url, timeout=10, allow_redirects=True)
+        response = requests.get(url, timeout=20, allow_redirects=True)
         soup = BeautifulSoup(response.text, "html.parser")
 
         # ----------------------------
