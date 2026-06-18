@@ -15,13 +15,14 @@ def normalize_login_url(url):
 
 def scan_authentication(url):
     """
-    Auth Scan v0.3.1 - Hybrid Authentication Surface Intelligence
+    Auth Scan v0.5.0
 
     Layers:
-    - Link-based discovery
-    - Form-based discovery
-    - Endpoint probing (generic + WordPress-safe fallback)
+    - Link discovery
+    - Form discovery
+    - Endpoint probing
     - Validation engine
+    - Function entry collection
     """
 
     LOGIN_KEYWORDS = [
@@ -43,55 +44,116 @@ def scan_authentication(url):
 
     evidence = []
     detected = False
+
     login_urls = set()
 
+    # NEW
+    discovered_links = []
+
     try:
-        response = requests.get(url, timeout=20, allow_redirects=True)
-        soup = BeautifulSoup(response.text, "html.parser")
+
+        response = requests.get(
+            url,
+            timeout=20,
+            allow_redirects=True
+        )
+
+        soup = BeautifulSoup(
+            response.text,
+            "html.parser"
+        )
 
         # ----------------------------
-        # Step 1: Generic link discovery
+        # Step 1: Link Discovery
         # ----------------------------
         for a_tag in soup.find_all("a"):
 
             href = a_tag.get("href")
-            text = (a_tag.text or "").lower()
 
             if not href:
                 continue
 
-            full_url = urljoin(url, href)
-            normalized_url = normalize_login_url(full_url)
+            text = (
+                a_tag.get_text(strip=True)
+                or ""
+            )
+
+            full_url = urljoin(
+                url,
+                href
+            )
+
+            # NEW
+            discovered_links.append({
+                "text": text,
+                "url": full_url
+            })
+
+            normalized_url = normalize_login_url(
+                full_url
+            )
 
             lower_href = href.lower()
+            lower_text = text.lower()
 
-            if any(keyword in lower_href or keyword in text for keyword in LOGIN_KEYWORDS):
-                login_urls.add(normalized_url)
+            if any(
+                keyword in lower_href
+                or keyword in lower_text
+                for keyword in LOGIN_KEYWORDS
+            ):
+
+                login_urls.add(
+                    normalized_url
+                )
 
                 evidence.append({
                     "method": "link",
-                    "detail": f"Login link detected: {normalized_url}",
+                    "detail": (
+                        f"Login link detected: "
+                        f"{normalized_url}"
+                    ),
                     "url": normalized_url
                 })
 
         # ----------------------------
-        # Step 1.5: Endpoint probing
+        # Step 1.5: Endpoint Probe
         # ----------------------------
         for path in COMMON_LOGIN_PATHS:
 
-            probe_url = urljoin(url, path)
+            probe_url = urljoin(
+                url,
+                path
+            )
 
             try:
-                r = requests.get(probe_url, timeout=5, allow_redirects=True)
+
+                r = requests.get(
+                    probe_url,
+                    timeout=5,
+                    allow_redirects=True
+                )
+
                 content = r.text.lower()
 
-                if ("password" in content and "login" in content):
+                if (
+                    "password" in content
+                    and "login" in content
+                ):
+
                     detected = True
-                    login_urls.add(normalize_login_url(r.url))
+
+                    login_urls.add(
+                        normalize_login_url(
+                            r.url
+                        )
+                    )
 
                     evidence.append({
                         "method": "endpoint_probe",
-                        "detail": f"Login endpoint confirmed at {r.url}",
+                        "detail": (
+                            f"Login endpoint "
+                            f"confirmed at {r.url}"
+                        ),
                         "url": r.url
                     })
 
@@ -99,53 +161,87 @@ def scan_authentication(url):
                 continue
 
         # ----------------------------
-        # Step 2: Form-based discovery
+        # Step 2: Form Discovery
         # ----------------------------
         for form in soup.find_all("form"):
 
-            form_text = form.get_text().lower()
-            inputs = form.find_all("input")
+            inputs = form.find_all(
+                "input"
+            )
 
             has_password_field = any(
-                i.get("type", "").lower() == "password"
+                i.get(
+                    "type",
+                    ""
+                ).lower() == "password"
                 for i in inputs
             )
 
             if has_password_field:
 
-                action = form.get("action", "")
-                form_url = urljoin(response.url, action)
+                action = form.get(
+                    "action",
+                    ""
+                )
 
-                login_urls.add(normalize_login_url(form_url))
+                form_url = urljoin(
+                    response.url,
+                    action
+                )
+
+                login_urls.add(
+                    normalize_login_url(
+                        form_url
+                    )
+                )
 
                 evidence.append({
                     "method": "form_discovery",
-                    "detail": f"Login form detected at {form_url}",
+                    "detail": (
+                        f"Login form detected "
+                        f"at {form_url}"
+                    ),
                     "url": form_url
                 })
 
         # ----------------------------
-        # Step 3: Validation engine
+        # Step 3: Validation
         # ----------------------------
-        for login_url in list(login_urls):
+        for login_url in list(
+            login_urls
+        ):
 
             try:
-                r = requests.get(login_url, timeout=10, allow_redirects=True)
+
+                r = requests.get(
+                    login_url,
+                    timeout=10,
+                    allow_redirects=True
+                )
+
                 content = r.text.lower()
 
                 if (
                     "password" in content
-                    and ("username" in content or "login" in content)
+                    and (
+                        "username" in content
+                        or "login" in content
+                    )
                 ):
+
                     detected = True
 
                     evidence.append({
                         "method": "validation",
-                        "detail": f"Login page confirmed at {r.url}",
+                        "detail": (
+                            f"Login page "
+                            f"confirmed at {r.url}"
+                        ),
                         "url": r.url
                     })
 
             except requests.RequestException as e:
+
                 evidence.append({
                     "method": "error",
                     "detail": str(e),
@@ -153,38 +249,66 @@ def scan_authentication(url):
                 })
 
         # ----------------------------
-        # Step 4: fallback heuristic
+        # Step 4: Fallback
         # ----------------------------
         if not login_urls:
+
             if "login" in response.text.lower():
+
                 detected = True
 
                 evidence.append({
                     "method": "fallback",
-                    "detail": "Login keyword found in homepage (no explicit surface)",
+                    "detail": (
+                        "Login keyword found "
+                        "in homepage"
+                    ),
                     "url": url
                 })
 
         # ----------------------------
-        # final cleanup
+        # Cleanup
         # ----------------------------
         login_urls = [
-            u for u in login_urls
-            if any(x in u.lower() for x in ["login", "wp-login", "signin", "admin"])
+            u
+            for u in login_urls
+            if any(
+                x in u.lower()
+                for x in [
+                    "login",
+                    "wp-login",
+                    "signin",
+                    "admin"
+                ]
+            )
         ]
 
         return {
             "login_page_found": detected,
-            "login_urls": login_urls if login_urls else None,
+            "login_urls": (
+                login_urls
+                if login_urls
+                else None
+            ),
+
+            # NEW
+            "discovered_links":
+                discovered_links,
+
             "final_url": response.url,
             "evidence": evidence,
             "error": None
         }
 
     except requests.RequestException as e:
+
         return {
             "login_page_found": False,
             "login_urls": None,
+
+            # NEW
+            "discovered_links": [],
+
             "final_url": None,
             "evidence": [],
             "error": str(e)
