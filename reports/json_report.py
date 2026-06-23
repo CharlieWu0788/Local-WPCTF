@@ -5,7 +5,11 @@ def generate_report(
     target_url,
     attack_surface,
     test_plan,
-    owasp_findings
+    owasp_findings,
+    coverage_result,
+    risk_result,
+    posture_result,
+    dashboard_result
 ):
     """
     Generate standardized assessment report.
@@ -14,7 +18,7 @@ def generate_report(
     report = {
         "metadata": {
             "framework": "Local WPCTF",
-            "version": "v0.4.0",
+            "version": "v0.6.0",
             "target": target_url,
             "timestamp": datetime.utcnow().isoformat() + "Z"
         },
@@ -35,7 +39,18 @@ def generate_report(
 
         "test_plan": test_plan,
 
-        "owasp": owasp_findings
+        "owasp": owasp_findings,
+
+        "analytics": {
+
+            "coverage": coverage_result,
+
+            "risk_distribution": risk_result,
+
+            "security_posture": posture_result,
+
+            "dashboard": dashboard_result
+}
     }
 
     return report

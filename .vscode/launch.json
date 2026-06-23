@@ -1,0 +1,13 @@
+{
+    "version": "0.6.0",
+    "configurations": [
+        {
+            "name": "Run Local WPCTF",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}
