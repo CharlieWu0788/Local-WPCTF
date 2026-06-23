@@ -1,86 +1,118 @@
-from urllib.parse import urlparse
-
-
-IGNORE_PATTERNS = [
-    "#",
-    "/#",
-    "javascript:void(0)",
-    ""
-]
-
-
-def is_valid_target(url):
-    """
-    Filter out fake / UI-only links
-    """
-
-    if not url:
-        return False
-
-    if url in IGNORE_PATTERNS:
-        return False
-
-    parsed = urlparse(url)
-
-    # must have real path OR real endpoint
-    if parsed.path in ["", "/"] and parsed.fragment:
-        return False
-
-    return True
-
-
-def normalize_function_name(text):
-    """
-    Normalize UI text into function name
-    """
-
-    if not text:
-        return "unknown"
-
-    return text.lower().strip().replace(" ", "_")
-
-
 def discover_functions(scan_results):
     """
-    Extract meaningful application functions only
+    Discover application functions from scan results.
+
+    V0.7.1
+    - Uses WordPress detection
+    - Uses authentication findings
+    - Uses discovered links
+    - Produces richer function mapping
     """
 
     functions = []
-    seen = set()
 
     auth = scan_results.get("auth", {})
-    wp = scan_results.get("wordpress", {})
+    wordpress = scan_results.get("wordpress", {})
 
-    # ---------------------------
-    # Auth-based function
-    # ---------------------------
-    if auth.get("login_page_found"):
-        for url in auth.get("login_urls") or []:
+    # ----------------------------------
+    # WordPress Admin
+    # ----------------------------------
+    if wordpress.get("wordpress_detected"):
 
-            if not is_valid_target(url):
-                continue
-
-            key = ("login", url)
-
-            if key not in seen:
-                functions.append({
-                    "function": "login",
-                    "target": url
-                })
-                seen.add(key)
-
-    # ---------------------------
-    # WordPress core function
-    # ---------------------------
-    if wp.get("wordpress_detected"):
         functions.append({
             "function": "wordpress_admin",
-            "target": "wordpress_instance"
+            "target": "/wp-admin"
         })
 
-    # ---------------------------
-    # OPTIONAL: future extension hook
-    # ---------------------------
-    # (SQL / XSS / crawling can plug in here later)
+    # ----------------------------------
+    # Login Detection
+    # ----------------------------------
+    if auth.get("login_page_found"):
 
-    return functions
+        for login_url in auth.get("login_urls", []):
+
+            functions.append({
+                "function": "login",
+                "target": login_url
+            })
+
+    # ----------------------------------
+    # Link-Based Discovery
+    # ----------------------------------
+    for link in auth.get("discovered_links", []):
+
+        text = link.get("text", "").strip().lower()
+        url = link.get("url", "")
+
+        if text == "blog":
+
+            functions.append({
+                "function": "blog",
+                "target": url
+            })
+
+        elif text == "about":
+
+            functions.append({
+                "function": "about",
+                "target": url
+            })
+
+        elif text in ["faq", "faqs"]:
+
+            functions.append({
+                "function": "faq",
+                "target": url
+            })
+
+        elif text in ["author", "authors"]:
+
+            functions.append({
+                "function": "author",
+                "target": url
+            })
+
+        elif text in ["event", "events"]:
+
+            functions.append({
+                "function": "event",
+                "target": url
+            })
+
+        elif text == "shop":
+
+            functions.append({
+                "function": "shop",
+                "target": url
+            })
+
+    # ----------------------------------
+    # Remove Duplicates
+    # ----------------------------------
+    unique_functions = []
+
+    seen = set()
+
+    for function in functions:
+
+        key = (
+            function["function"],
+            function["target"]
+        )
+
+        if key not in seen:
+
+            seen.add(key)
+            unique_functions.append(function)
+
+    # ----------------------------------
+    # Safety Fallback
+    # ----------------------------------
+    if not unique_functions:
+
+        unique_functions.append({
+            "function": "wordpress_admin",
+            "target": "/wp-admin"
+        })
+
+    return unique_functions

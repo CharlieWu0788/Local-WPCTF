@@ -11,14 +11,17 @@ from workflow.attack_surface import build_attack_surface
 from workflow.test_plan import generate_test_plan
 from workflow.pipeline_checker import validate_pipeline
 
+from workflow.validation_execution import execute_validation
+from workflow.exploit_simulation import run_exploitability_analysis
+
 from reports.owasp_mapper import classify_test_plan
 from reports.json_report import generate_report
-
 from reports.risk_engine import rank_attack_surface
 
-from analytics.coverage_analyzer import analyze_coverage
-from analytics.risk_analytics import analyze_risk
-from analytics.posture_analyzer import analyze_posture
+from analysis.coverage_analyzer import analyze_coverage
+from analysis.risk_analytics import analyze_risk
+from analysis.posture_analyzer import analyze_posture
+from analysis.validation_analytics import analyze_validation
 
 from reports.dashboard_generator import generate_dashboard
 
@@ -38,9 +41,6 @@ def main():
     print("[*] Running authentication scan...")
     auth_result = scan_authentication(url)
 
-    print("[DEBUG] Auth Result:")
-    print(json.dumps(auth_result, indent=4))
-
     print("[*] Running SQL reconnaissance...")
     sql_result = scan_sql_injection(url)
 
@@ -56,8 +56,6 @@ def main():
 
     print("[*] Discovering functions...")
     functions = discover_functions(scan_results)
-
-    print(json.dumps(functions, indent=4))
 
     print("[*] Building attack surface...")
     attack_surface = build_attack_surface(
@@ -75,6 +73,28 @@ def main():
         test_plan
     )
 
+    print("[*] Ranking attack surface...")
+    attack_surface = rank_attack_surface(
+        attack_surface,
+        owasp_report["owasp"]
+    )
+
+    print("[*] Executing validation layer...")
+    validation_results = execute_validation(
+        test_plan
+    )
+
+    print("[*] Running validation analytics...")
+    validation_summary = analyze_validation(
+        validation_results
+    )
+
+    print("[*] Running exploitability analysis...")
+    exploitability_results = run_exploitability_analysis(
+        attack_surface,
+        validation_results
+    )
+
     validate_pipeline(
         scan_results,
         functions,
@@ -83,51 +103,33 @@ def main():
         owasp_report
     )
 
-    print("\n[DEBUG] OWASP Report:")
-    print(json.dumps(
-        owasp_report,
-        indent=4
-    ))
-
-    print("[*] Ranking attack surface...")
-
-    attack_surface = rank_attack_surface(
-        attack_surface,
-        owasp_report["owasp"]
-    )
-
-    print(json.dumps(
-        attack_surface,
-        indent=4
-    ))
-
     print("[*] Running coverage analysis...")
-
     coverage_result = analyze_coverage(
         attack_surface,
         test_plan
     )
 
     print("[*] Running risk analytics...")
-
     risk_result = analyze_risk(
         attack_surface
     )
 
     print("[*] Analyzing security posture...")
-
     posture_result = analyze_posture(
         coverage_result,
         risk_result
     )
 
     print("[*] Generating dashboard...")
-
     dashboard_result = generate_dashboard(
         coverage_result,
         risk_result,
-        posture_result
+        posture_result,
+        validation_summary,
+        exploitability_results
     )
+
+    print("[*] Generating standardized report...")
 
     report = generate_report(
         url,
@@ -137,15 +139,11 @@ def main():
         coverage_result,
         risk_result,
         posture_result,
+        validation_results,
+        validation_summary,
+        exploitability_results,
         dashboard_result
     )
-
-    print("\n[*] Generating standardized report...\n")
-
-    print(json.dumps(
-        report,
-        indent=4
-    ))
 
     os.makedirs(
         "output",
@@ -165,7 +163,7 @@ def main():
             ensure_ascii=False
         )
 
-    print("\n[+] Report saved to output/report.json")
+    print("[+] Report saved to output/report.json")
 
 
 if __name__ == "__main__":
