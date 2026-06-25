@@ -3,22 +3,21 @@ import requests
 
 def execute_xss_validation(task):
     """
-    Safe reflection validation.
+    Safe reflection validation (V1.0.1 schema-safe)
     """
 
-    target = task["target"]
-
+    target = task.get("target", "")
     marker = "WPCTF_TEST"
 
     result = {
         "surface_type": "xss",
         "target": target,
         "validated": False,
-        "evidence": []
+        "evidence": [],
+        "error": None
     }
 
     try:
-
         response = requests.get(
             target,
             params={"q": marker},
@@ -26,17 +25,10 @@ def execute_xss_validation(task):
         )
 
         if marker in response.text:
-
             result["validated"] = True
-
-            result["evidence"].append(
-                "Input reflected in response"
-            )
+            result["evidence"].append("Input reflected in response")
 
     except Exception as e:
-
-        result["evidence"].append(
-            f"Validation error: {str(e)}"
-        )
+        result["error"] = str(e)
 
     return result

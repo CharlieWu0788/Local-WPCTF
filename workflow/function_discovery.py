@@ -1,12 +1,20 @@
-def discover_functions(scan_results):
+def discover_functions(
+    scan_results,
+    app_context=None
+):
     """
-    Discover application functions from scan results.
+    Function Discovery V1.0
 
-    V0.7.1
-    - Uses WordPress detection
-    - Uses authentication findings
-    - Uses discovered links
-    - Produces richer function mapping
+    Supports:
+    - WordPress
+    - DVWA
+    - OWASP Juice Shop
+    - WebGoat
+    - Mutillidae
+    - Generic Web Applications
+
+    Produces normalized business/security functions
+    for attack surface modeling.
     """
 
     functions = []
@@ -14,35 +22,105 @@ def discover_functions(scan_results):
     auth = scan_results.get("auth", {})
     wordpress = scan_results.get("wordpress", {})
 
-    # ----------------------------------
-    # WordPress Admin
-    # ----------------------------------
-    if wordpress.get("wordpress_detected"):
+    app_type = "generic_web"
 
-        functions.append({
-            "function": "wordpress_admin",
-            "target": "/wp-admin"
-        })
+    if app_context:
+        app_type = app_context.app_type
 
-    # ----------------------------------
-    # Login Detection
-    # ----------------------------------
+    # =====================================================
+    # Authentication Discovery
+    # =====================================================
+
     if auth.get("login_page_found"):
 
-        for login_url in auth.get("login_urls", []):
+        for login_url in auth.get(
+            "login_urls",
+            []
+        ):
 
             functions.append({
                 "function": "login",
                 "target": login_url
             })
 
-    # ----------------------------------
-    # Link-Based Discovery
-    # ----------------------------------
-    for link in auth.get("discovered_links", []):
+    # =====================================================
+    # WordPress Model
+    # =====================================================
 
-        text = link.get("text", "").strip().lower()
-        url = link.get("url", "")
+    if app_type == "wordpress":
+
+        if wordpress.get(
+            "wordpress_detected"
+        ):
+
+            functions.append({
+                "function": "wordpress_admin",
+                "target": "/wp-admin"
+            })
+
+    # =====================================================
+    # Training Platforms
+    # =====================================================
+
+    elif app_type in [
+        "dvwa",
+        "juice_shop",
+        "webgoat",
+        "mutillidae"
+    ]:
+
+        functions.extend([
+
+            {
+                "function": "security_training",
+                "target": "/"
+            },
+
+            {
+                "function": "user_management",
+                "target": "/login"
+            },
+
+            {
+                "function": "vulnerability_module",
+                "target": "/"
+            }
+
+        ])
+
+    # =====================================================
+    # Generic Web Application
+    # =====================================================
+
+    else:
+
+        functions.append({
+            "function": "web_application",
+            "target": "/"
+        })
+
+    # =====================================================
+    # Link-Based Discovery
+    # =====================================================
+
+    for link in auth.get(
+        "discovered_links",
+        []
+    ):
+
+        text = (
+            link.get(
+                "text",
+                ""
+            )
+            .strip()
+            .lower()
+        )
+
+        url = link.get(
+            "url",
+            ""
+        )
 
         if text == "blog":
 
@@ -58,37 +136,69 @@ def discover_functions(scan_results):
                 "target": url
             })
 
-        elif text in ["faq", "faqs"]:
+        elif text in [
+            "faq",
+            "faqs"
+        ]:
 
             functions.append({
                 "function": "faq",
                 "target": url
             })
 
-        elif text in ["author", "authors"]:
+        elif text in [
+            "author",
+            "authors"
+        ]:
 
             functions.append({
                 "function": "author",
                 "target": url
             })
 
-        elif text in ["event", "events"]:
-
-            functions.append({
-                "function": "event",
-                "target": url
-            })
-
-        elif text == "shop":
+        elif text in [
+            "shop",
+            "store"
+        ]:
 
             functions.append({
                 "function": "shop",
                 "target": url
             })
 
-    # ----------------------------------
+        elif text in [
+            "profile",
+            "account"
+        ]:
+
+            functions.append({
+                "function": "profile",
+                "target": url
+            })
+
+        elif text in [
+            "admin",
+            "dashboard"
+        ]:
+
+            functions.append({
+                "function": "admin_panel",
+                "target": url
+            })
+
+        elif text in [
+            "search"
+        ]:
+
+            functions.append({
+                "function": "search",
+                "target": url
+            })
+
+    # =====================================================
     # Remove Duplicates
-    # ----------------------------------
+    # =====================================================
+
     unique_functions = []
 
     seen = set()
@@ -103,16 +213,20 @@ def discover_functions(scan_results):
         if key not in seen:
 
             seen.add(key)
-            unique_functions.append(function)
 
-    # ----------------------------------
+            unique_functions.append(
+                function
+            )
+
+    # =====================================================
     # Safety Fallback
-    # ----------------------------------
+    # =====================================================
+
     if not unique_functions:
 
-        unique_functions.append({
-            "function": "wordpress_admin",
-            "target": "/wp-admin"
+        functions.append({
+            "function": "web_application",
+            "target": "/"
         })
 
     return unique_functions

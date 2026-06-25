@@ -1,59 +1,43 @@
-from typing import Dict, List, Any
-
-
 class AttackNode:
     """
-    Represents a single attack surface node in the security graph.
+    V1.0.1 Graph Node
     """
 
-    def __init__(self, node_id: str, node_type: str, target: str):
+    def __init__(self, node_id, node_type, target):
         self.node_id = node_id
         self.node_type = node_type
         self.target = target
+        self.attributes = {}
 
-        self.attributes: Dict[str, Any] = {}
-        self.edges: List[str] = []
-
-    def add_attribute(self, key: str, value: Any):
+    def add_attribute(self, key, value):
         self.attributes[key] = value
-
-    def add_edge(self, target_node_id: str):
-        if target_node_id not in self.edges:
-            self.edges.append(target_node_id)
 
 
 class AttackGraph:
     """
-    Core Attack Surface Graph for V1.0 framework.
-
-    This replaces list-based attack surface modeling with a graph-based structure.
+    V1.0.1 Attack Graph
     """
 
     def __init__(self):
-        self.nodes: Dict[str, AttackNode] = {}
+        self.nodes = {}
+        self.edges = []
 
-    def add_node(self, node: AttackNode):
+    def add_node(self, node):
         self.nodes[node.node_id] = node
 
-    def add_edge(self, from_id: str, to_id: str):
-        if from_id in self.nodes:
-            self.nodes[from_id].add_edge(to_id)
-
-    def get_node(self, node_id: str):
-        return self.nodes.get(node_id)
+    def add_edge(self, from_id, to_id):
+        self.edges.append((from_id, to_id))
 
     def to_dict(self):
-        """
-        Serialize graph for reporting layer.
-        """
         return {
             "nodes": {
                 node_id: {
+                    "node_id": node.node_id,
                     "type": node.node_type,
                     "target": node.target,
-                    "attributes": node.attributes,
-                    "edges": node.edges
+                    "attributes": node.attributes
                 }
                 for node_id, node in self.nodes.items()
-            }
+            },
+            "edges": self.edges
         }

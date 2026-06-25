@@ -1,10 +1,10 @@
 def analyze_coverage(attack_surface, test_plan):
     """
-    V0.6 Coverage Analyzer
-
-    Measures how many attack surfaces
-    are covered by generated test cases.
+    V1.0.1 Coverage Analyzer (schema-safe)
     """
+
+    attack_surface = attack_surface or []
+    test_plan = test_plan or []
 
     surface_count = len(attack_surface)
     covered_count = min(len(test_plan), surface_count)
@@ -17,12 +17,11 @@ def analyze_coverage(attack_surface, test_plan):
             2
         )
 
-    return {
+    result = {
         "surface_count": surface_count,
         "covered_count": covered_count,
-        "uncovered_count": max(
-            surface_count - covered_count,
-            0
-        ),
+        "uncovered_count": max(surface_count - covered_count, 0),
         "coverage_score": coverage_score
     }
+
+    return result

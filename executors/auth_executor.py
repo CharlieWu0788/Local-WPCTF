@@ -4,20 +4,20 @@ from bs4 import BeautifulSoup
 
 def execute_auth_validation(task):
     """
-    Safely validate authentication surface.
+    Safely validate authentication surface (V1.0.1 schema-safe)
     """
 
-    target = task["target"]
+    target = task.get("target", "")
 
     result = {
         "surface_type": "auth",
         "target": target,
         "validated": False,
-        "evidence": []
+        "evidence": [],
+        "error": None
     }
 
     try:
-
         response = requests.get(
             target,
             timeout=5
@@ -25,31 +25,19 @@ def execute_auth_validation(task):
 
         if response.status_code == 200:
 
-            soup = BeautifulSoup(
-                response.text,
-                "html.parser"
-            )
-
+            soup = BeautifulSoup(response.text, "html.parser")
             form = soup.find("form")
 
             if form:
 
                 result["validated"] = True
+                result["evidence"].append("Login form detected")
 
-                result["evidence"].append(
-                    "Login form detected"
-                )
-
-                if form.get("action"):
-
-                    result["evidence"].append(
-                        f"Form action: {form.get('action')}"
-                    )
+                action = form.get("action")
+                if action:
+                    result["evidence"].append(f"Form action: {action}")
 
     except Exception as e:
-
-        result["evidence"].append(
-            f"Validation error: {str(e)}"
-        )
+        result["error"] = str(e)
 
     return result

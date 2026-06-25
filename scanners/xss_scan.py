@@ -5,14 +5,7 @@ from urllib.parse import urljoin
 
 def scan_xss(url):
     """
-    Basic reflected XSS scanner.
-
-    Returns:
-        {
-            "xss_detected": bool,
-            "evidence": list,
-            "tested_payloads": list
-        }
+    XSS scanner (V1.0.1 schema-safe version)
     """
 
     PAYLOADS = [
@@ -21,109 +14,104 @@ def scan_xss(url):
         "<img src=x onerror=alert(1)>"
     ]
 
-    evidence = []
-    detected = False
+    # --------------------------------------
+    # V1 schema-stable result
+    # --------------------------------------
+    result = {
+        "xss_detected": False,
+        "evidence": [],
+        "tested_payloads": PAYLOADS,
+        "error": None
+    }
 
     try:
         response = requests.get(url, timeout=5)
         soup = BeautifulSoup(response.text, "html.parser")
 
-        forms = soup.find_all("form")
+    except requests.RequestException as e:
+        result["error"] = str(e)
+        return result
 
-        if not forms:
-            return {
-                "xss_detected": False,
-                "evidence": ["No forms discovered"],
-                "tested_payloads": PAYLOADS
-            }
+    forms = soup.find_all("form")
 
-        evidence.append(f"Discovered {len(forms)} form(s)")
+    if not forms:
+        result["evidence"].append("No forms discovered")
+        return result
 
-        for form in forms:
+    result["evidence"].append(f"Discovered {len(forms)} form(s)")
 
-            action = form.get("action")
-            method = form.get("method", "get").lower()
+    detected = False
+    evidence = []
 
-            target_url = urljoin(url, action) if action else url
+    for form in forms:
 
-            evidence.append(
-                f"Testing form at {target_url} using {method.upper()}"
-            )
+        action = form.get("action")
+        method = form.get("method", "get").lower()
 
-            inputs = form.find_all(["input", "textarea"])
+        target_url = urljoin(url, action) if action else url
 
-            for payload in PAYLOADS:
+        evidence.append(
+            f"Testing form at {target_url} using {method.upper()}"
+        )
 
-                form_data = {}
+        inputs = form.find_all(["input", "textarea"])
 
-                for field in inputs:
+        for payload in PAYLOADS:
 
-                    name = field.get("name")
+            form_data = {}
 
-                    if not name:
-                        continue
+            for field in inputs:
 
-                    field_type = field.get("type", "text").lower()
+                name = field.get("name")
 
-                    if field_type in [
-                        "text",
-                        "search",
-                        "email",
-                        "url",
-                        "hidden",
-                        "textarea"
-                    ]:
-                        form_data[name] = payload
-                    else:
-                        form_data[name] = "test"
+                if not name:
+                    continue
 
-                try:
+                field_type = field.get("type", "text").lower()
 
-                    if method == "post":
-                        test_response = requests.post(
-                            target_url,
-                            data=form_data,
-                            timeout=5
-                        )
-                    else:
-                        test_response = requests.get(
-                            target_url,
-                            params=form_data,
-                            timeout=5
-                        )
+                if field_type in ["text", "search", "email", "url", "hidden", "textarea"]:
+                    form_data[name] = payload
+                else:
+                    form_data[name] = "test"
 
-                    response_text = test_response.text
-
-                    if payload in response_text:
-
-                        detected = True
-
-                        evidence.append(
-                            f"Unescaped payload reflected at {target_url}"
-                        )
-
-                    elif "alert(1)" in response_text:
-
-                        evidence.append(
-                            f"Payload content reflected but appears encoded at {target_url}"
-                        )
-
-                except requests.RequestException as e:
-
-                    evidence.append(
-                        f"Request failed for {target_url}: {str(e)}"
+            try:
+                if method == "post":
+                    test_response = requests.post(
+                        target_url,
+                        data=form_data,
+                        timeout=5
+                    )
+                else:
+                    test_response = requests.get(
+                        target_url,
+                        params=form_data,
+                        timeout=5
                     )
 
-        return {
-            "xss_detected": detected,
-            "evidence": list(set(evidence)),
-            "tested_payloads": PAYLOADS
-        }
+                response_text = test_response.text
 
-    except requests.RequestException as e:
+                # --------------------------------------
+                # Reflection detection
+                # --------------------------------------
+                if payload in response_text:
+                    detected = True
+                    evidence.append(
+                        f"Unescaped payload reflected at {target_url}"
+                    )
 
-        return {
-            "xss_detected": False,
-            "evidence": [f"Initial request failed: {str(e)}"],
-            "tested_payloads": PAYLOADS
-        }
+                elif "alert(1)" in response_text:
+                    evidence.append(
+                        f"Encoded payload reflected at {target_url}"
+                    )
+
+            except requests.RequestException:
+                # V1 rule: do not treat request failure as evidence
+                continue
+
+    # --------------------------------------
+    # Final schema assignment
+    # --------------------------------------
+    result["xss_detected"] = detected
+    result["evidence"] = list(set(evidence))
+
+    return result

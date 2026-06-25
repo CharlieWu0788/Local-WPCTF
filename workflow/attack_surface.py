@@ -1,16 +1,43 @@
-from reports.confidence_scoring import score_attack_surface
 from workflow.attack_graph import AttackGraph, AttackNode
+from reports.confidence_scoring import score_attack_surface
+
+
+# -----------------------------
+# V1.0.1 Capability Mapping Layer
+# -----------------------------
+CAPABILITY_MAP = {
+    "authentication": ["login", "signin", "auth", "logout"],
+    "content": ["blog", "post", "content", "comment"],
+    "information": ["about", "faq", "info", "help"],
+    "user": ["user", "profile", "account"],
+    "business": ["shop", "checkout", "payment"],
+    "api": ["api", "endpoint", "graphql", "rest"]
+}
+
+
+def detect_capability(func_name: str):
+    """
+    V1.0.1 Generic capability detection layer
+    """
+
+    if not isinstance(func_name, str):
+        return "generic"
+
+    func_name = func_name.lower()
+
+    for capability, keywords in CAPABILITY_MAP.items():
+        if func_name in keywords:
+            return capability
+
+    return "generic"
 
 
 def build_attack_surface(functions, auth_result=None):
     """
-    Build attack surface graph from discovered functions.
-
-    V1.0 Upgrade:
-    - Converts flat surface list into graph structure
-    - Enables dependency modeling between surfaces
-    - Prepares for exploit chain analysis
+    Build attack surface graph (V1.0.1 safe version)
     """
+
+    functions = functions or []
 
     graph = AttackGraph()
     attack_surface = []
@@ -19,79 +46,59 @@ def build_attack_surface(functions, auth_result=None):
 
     for i, function in enumerate(functions):
 
-        func_name = function.get("function", "").lower()
+        if not isinstance(function, dict):
+            continue
+
+        func_name = (function.get("function") or "").lower()
         target = function.get("target", "")
 
         node_id = f"node_{i}_{func_name}"
 
-        surface_type = None
-        possible_tests = []
+        # -----------------------------
+        # capability detection
+        # -----------------------------
+        capability = detect_capability(func_name)
+        surface_type = f"{capability}_surface"
 
         # -----------------------------
-        # Authentication Surface
+        # test mapping
         # -----------------------------
-        if func_name in ["login", "signin", "auth"]:
-
-            surface_type = "authentication_surface"
-            possible_tests = [
+        test_map = {
+            "authentication": [
                 "weak_password_testing",
                 "authentication_bypass",
-                "session_management"
-            ]
-
-        # -----------------------------
-        # Content Surface
-        # -----------------------------
-        elif func_name in ["blog", "post", "content", "comment"]:
-
-            surface_type = "content_surface"
-            possible_tests = [
+                "session_analysis"
+            ],
+            "content": [
                 "stored_xss",
                 "html_injection"
-            ]
-
-        # -----------------------------
-        # Information Surface
-        # -----------------------------
-        elif func_name in ["about", "faq", "info"]:
-
-            surface_type = "information_surface"
-            possible_tests = [
+            ],
+            "information": [
                 "information_disclosure",
                 "debug_exposure"
-            ]
-
-        # -----------------------------
-        # User Surface
-        # -----------------------------
-        elif func_name in ["user", "profile", "account"]:
-
-            surface_type = "user_surface"
-            possible_tests = [
+            ],
+            "user": [
                 "user_enumeration",
                 "privilege_escalation"
-            ]
-
-        # -----------------------------
-        # Business Logic Surface
-        # -----------------------------
-        elif func_name in ["shop", "checkout", "payment"]:
-
-            surface_type = "business_surface"
-            possible_tests = [
+            ],
+            "business": [
                 "workflow_bypass",
                 "parameter_tampering"
-            ]
-
-        else:
-            surface_type = "generic_surface"
-            possible_tests = [
+            ],
+            "api": [
+                "api_auth_bypass",
+                "rate_limit_testing"
+            ],
+            "generic": [
                 "input_fuzzing",
                 "injection_detection"
             ]
+        }
+
+        possible_tests = test_map.get(capability, test_map["generic"])
 
         # -----------------------------
-        # Create Graph Node
+        # graph node
         # -----------------------------
         node = AttackNode(
             node_id=node_id,
@@ -100,9 +107,13 @@ def build_attack_surface(functions, auth_result=None):
         )
 
         node.add_attribute("function", func_name)
+        node.add_attribute("capability", capability)
         node.add_attribute("possible_tests", possible_tests)
+        node.add_attribute("position", i)
 
-        # Confidence scoring (still reused)
+        # -----------------------------
+        # confidence scoring
+        # -----------------------------
         confidence = score_attack_surface(
             {
                 "type": surface_type,
@@ -117,23 +128,27 @@ def build_attack_surface(functions, auth_result=None):
         graph.add_node(node)
 
         # -----------------------------
-        # Create edges (simple flow model)
+        # graph edges
         # -----------------------------
         if previous_node_id:
             graph.add_edge(previous_node_id, node_id)
 
         previous_node_id = node_id
 
-        # Keep backward compatibility output
+        # -----------------------------
+        # output schema
+        # -----------------------------
         attack_surface.append({
             "id": node_id,
             "type": surface_type,
+            "capability": capability,
             "target": target,
             "confidence": confidence,
             "possible_tests": possible_tests
         })
 
     return {
+        "schema_version": "v1.0.1",
         "graph": graph.to_dict(),
         "surface_list": attack_surface
     }

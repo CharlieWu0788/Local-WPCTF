@@ -285,11 +285,7 @@ def scan_authentication(url):
 
         return {
             "login_page_found": detected,
-            "login_urls": (
-                login_urls
-                if login_urls
-                else None
-            ),
+            "login_urls": list(login_urls),
 
             # NEW
             "discovered_links":
@@ -304,12 +300,12 @@ def scan_authentication(url):
 
         return {
             "login_page_found": False,
-            "login_urls": None,
+            "login_urls": [],
 
             # NEW
             "discovered_links": [],
 
-            "final_url": None,
+            "final_url": [],
             "evidence": [],
             "error": str(e)
         }

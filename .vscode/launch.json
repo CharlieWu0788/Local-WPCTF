@@ -1,11 +1,21 @@
 {
-    "version": "0.6.0",
+    "version": "1.0.1",
     "configurations": [
         {
-            "name": "Run Local WPCTF",
+            "name": "WPCTF - Scan Mode (F5)",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/main.py",
+            "args": ["--mode", "scan"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "WPCTF - Tree Mode (Ctrl+F5)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "args": ["--mode", "tree"],
             "console": "integratedTerminal",
             "justMyCode": true
         }

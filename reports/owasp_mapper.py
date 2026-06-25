@@ -1,108 +1,109 @@
-def classify_test_plan(test_plan):
+def classify_test_plan(test_plan=None, exploit_paths=None):
     """
-    Map generated test cases to OWASP Top 10 categories.
+    V1 OWASP Mapper (Graph-aware version)
+
+    Supports:
+    - Legacy test_plan (fallback)
+    - V1 exploit_paths (primary input)
     """
 
-    TEST_OWASP_MAP = {
+    owasp_mapping = []
 
-        # A07
-        "weak_password": (
-            "A07",
-            "Identification and Authentication Failures"
-        ),
+    # =====================================================
+    # V1 MODE: exploit path based classification (preferred)
+    # =====================================================
+    if exploit_paths:
 
-        "auth_bypass": (
-            "A07",
-            "Identification and Authentication Failures"
-        ),
+        for path_obj in exploit_paths:
 
-        "session_management": (
-            "A07",
-            "Identification and Authentication Failures"
-        ),
+            path = path_obj.get("path", [])
+            score = path_obj.get("risk_score", 0)
 
-        "username_enumeration": (
-            "A07",
-            "Identification and Authentication Failures"
-        ),
+            categories = set()
 
-        # A01
-        "access_control": (
-            "A01",
-            "Broken Access Control"
-        ),
+            for node in path:
 
-        "workflow_bypass": (
-            "A01",
-            "Broken Access Control"
-        ),
+                node_lower = str(node).lower()
 
-        # A03
-        "stored_xss": (
-            "A03",
-            "Injection"
-        ),
+                # -------------------------
+                # Authentication weakness
+                # -------------------------
+                if "login" in node_lower or "auth" in node_lower:
+                    categories.add("A07: Identification and Authentication Failures")
 
-        "content_injection": (
-            "A03",
-            "Injection"
-        ),
+                # -------------------------
+                # Injection / SQL / XSS
+                # -------------------------
+                if "sql" in node_lower or "inject" in node_lower:
+                    categories.add("A03: Injection")
 
-        "parameter_tampering": (
-            "A03",
-            "Injection"
-        ),
+                if "xss" in node_lower or "content" in node_lower:
+                    categories.add("A03: Injection")
 
-        "price_manipulation": (
-            "A03",
-            "Injection"
-        ),
+                # -------------------------
+                # Access Control Issues
+                # -------------------------
+                if "admin" in node_lower or "user" in node_lower:
+                    categories.add("A01: Broken Access Control")
 
-        # A05
-        "plugin_enumeration": (
-            "A05",
-            "Security Misconfiguration"
-        ),
+                # -------------------------
+                # Business Logic
+                # -------------------------
+                if "payment" in node_lower or "checkout" in node_lower:
+                    categories.add("A04: Insecure Design")
 
-        "version_detection": (
-            "A05",
-            "Security Misconfiguration"
-        ),
+            owasp_mapping.append({
+                "path": path,
+                "risk_score": score,
+                "owasp": list(categories) if categories else ["A05: Security Misconfiguration"]
+            })
 
-        "information_leakage": (
-            "A05",
-            "Security Misconfiguration"
-        ),
+        return {
+            "owasp": owasp_mapping
+        }
 
-        "sensitive_information_exposure": (
-            "A05",
-            "Security Misconfiguration"
-        ),
+    # =====================================================
+    # LEGACY MODE: fallback for old test_plan
+    # =====================================================
+    if test_plan:
 
-        "user_disclosure": (
-            "A05",
-            "Security Misconfiguration"
-        )
-    }
+        for item in test_plan:
 
-    findings = []
+            tests = item.get("possible_tests", [])
 
-    for task in test_plan:
+            categories = set()
 
-        test_name = task["test"]
+            for t in tests:
 
-        if test_name not in TEST_OWASP_MAP:
-            continue
+                if "auth" in t:
+                    categories.add("A07: Authentication Failures")
 
-        owasp_id, owasp_name = TEST_OWASP_MAP[test_name]
+                if "sql" in t:
+                    categories.add("A03: Injection")
 
-        findings.append({
-            "target": task["target"],
-            "test": test_name,
-            "owasp_id": owasp_id,
-            "owasp_name": owasp_name
-        })
+                if "xss" in t:
+                    categories.add("A03: Injection")
 
+                if "bypass" in t:
+                    categories.add("A01: Broken Access Control")
+
+            owasp_mapping.append({
+                "test": item,
+                "owasp": list(categories) if categories else ["A05: Security Misconfiguration"]
+            })
+
+        return {
+            "owasp": owasp_mapping
+        }
+
+    # =====================================================
+    # EMPTY SAFE RETURN (fixes your crash)
+    # =====================================================
     return {
-        "owasp": findings
+        "owasp": [
+            {
+                "owasp": ["A05: Security Misconfiguration"],
+                "note": "No exploit paths or test plan available"
+            }
+        ]
     }
