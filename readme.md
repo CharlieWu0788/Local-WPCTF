@@ -1,54 +1,55 @@
-# Local WPCTF
+# Local WPCTF (V1.0)
 
 ## 🎯 Overview
 
-Local WPCTF is a modular black-box security assessment framework focused on WordPress-based targets.
+Local Web Page CTF is a modular **Web Application Security Assessment Framework** designed for black-box security analysis, attack surface modeling, and exploitability reasoning across modern web applications.
 
-The project is designed for controlled security testing, attack surface discovery, validation-driven analysis, and security posture assessment.
+Unlike earlier WordPress-focused versions, V1.0 introduces a **framework-agnostic security engine** capable of analyzing diverse targets such as:
 
-The framework follows a staged workflow that progressively:
+- WordPress applications
+- DVWA
+- OWASP Juice Shop
+- WebGoat
+- Generic PHP / web applications
 
-* Discovers attack surfaces
-* Generates security test plans
-* Maps findings to OWASP Top 10
-* Validates discovered attack surfaces
-* Assesses exploitability
-* Produces standardized reports
+The framework focuses on **structured security reasoning**, not signature-based scanning.
 
 ---
 
-## 🏗️ Architecture
+## 🧠 Core Design Philosophy (V1.0)
+
+Local WPCTF V1.0 is built around a layered reasoning pipeline:
+
+- From discovery → to modeling → to reasoning → to exploit path analysis
+- From isolated vulnerabilities → to attack chains
+- From static scanning → to graph-based security intelligence
+
+---
+
+## 🏗️ Architecture (V1.0)
 
 ```text
-WordPress Detection
+Target Application
     ↓
-Authentication Scan
+Application Classification
     ↓
-SQL Reconnaissance
-    ↓
-XSS Reconnaissance
+Authentication & Surface Scanning
     ↓
 Function Discovery
     ↓
-Attack Surface Modeling
+Attack Surface Modeling (Graph-Based)
+    ↓
+Exploit Path Engine
     ↓
 Test Plan Generation
     ↓
 OWASP Classification
     ↓
-Attack Surface Ranking
-    ↓
 Validation Execution
-    ↓
-Validation Analytics
     ↓
 Exploitability Analysis
     ↓
-Pipeline Validation
-    ↓
-Coverage Analysis
-    ↓
-Risk Distribution Analysis
+Risk & Coverage Analytics
     ↓
 Security Posture Evaluation
     ↓
@@ -56,8 +57,6 @@ Dashboard Generation
     ↓
 Standardized Reporting
 ```
-
----
 
 ## 📁 Project Structure
 
@@ -68,182 +67,157 @@ Local WPCTF/
 ├── config.json
 ├── requirements.txt
 │
+├── core/
+│   ├── app_context.py
+│   ├── app_classifier.py
+│
 ├── scanners/
-│   ├── wordpress_scan.py
 │   ├── auth_scan.py
 │   ├── sql_scan.py
 │   ├── xss_scan.py
+│   ├── wordpress_scan.py (legacy plugin module)
 │
 ├── workflow/
 │   ├── function_discovery.py
 │   ├── attack_surface.py
+│   ├── attack_graph.py
+│   ├── exploit_path_engine.py
 │   ├── test_plan.py
 │   ├── validation_execution.py
-│   ├── exploit_simulation.py
-│   └── pipeline_checker.py
-│
-├── executors/
-│   ├── auth_executor.py
-│   ├── sql_executor.py
-│   ├── xss_executor.py
+│   ├── pipeline_checker.py
 │
 ├── analysis/
 │   ├── coverage_analyzer.py
 │   ├── posture_analyzer.py
 │   ├── risk_analytics.py
 │   ├── validation_analytics.py
-│   └── exploitability_engine.py
 │
 ├── reports/
 │   ├── confidence_scoring.py
 │   ├── dashboard_generator.py
 │   ├── json_report.py
 │   ├── owasp_mapper.py
-│   ├── risk_assessor.py
-│   └── risk_engine.py
+│   ├── risk_engine.py
 │
 └── output/
     └── report.json
 ```
 
----
+# 🚀 Key Features (V1.0)
 
-## 🚀 Features
+## 🔍 Application Intelligence
 
-### 🔍 Discovery
-
-* WordPress Detection
-* Authentication Discovery
-* Function Discovery
-* Attack Surface Modeling
-
-### 🧪 Assessment
-
-* SQL Reconnaissance
-* XSS Reconnaissance
-* OWASP Classification
-* Risk Ranking
-
-### ✅ Validation
-
-* Authentication Validation
-* SQL Interaction Validation
-* XSS Interaction Validation
-* Validation Evidence Collection
-
-### 🎯 Exploitability
-
-* Validation-Based Scoring
-* Exploitability Assessment
-* Risk Classification
-* Confidence-Oriented Analysis
-
-### 📊 Analytics
-
-* Coverage Analysis
-* Risk Distribution Analysis
-* Security Posture Evaluation
-* Dashboard Generation
-
-### 📝 Reporting
-
-* Standardized JSON Reporting
-* Validation Results
-* Validation Summary
-* Exploitability Results
+- Multi-framework application classification
+- Technology-agnostic target understanding
+- Dynamic application context modeling
 
 ---
 
-## 📦 Version History
+## 🧠 Attack Surface Intelligence
 
-### 🟢 v0.1.1
-
-* Initial WordPress Detection
-* Basic Scanning Workflow
-
-### 🔵 v0.2.0
-
-* Authentication Discovery
-* SQL Reconnaissance
-* XSS Reconnaissance
-
-### 🟣 v0.3.1
-
-* Function Discovery
-* Attack Surface Modeling
-
-### 🟠 v0.4.0
-
-* Test Plan Generation
-* OWASP Mapping
-
-### 🔴v0.5.6 — Generate Security Data
-
-* Attack Surface Ranking
-* Confidence Scoring
-* Pipeline Validation
-* Standardized Reporting
-* Risk Engine Integration
-
-### 🟡 v0.6.x — Analyze Security Data
-
-* Coverage Analysis
-* Risk Distribution Analytics
-* Security Posture Evaluation
-* Executive Dashboard Generation
-
-
-### 🟢 v0.7.0 — Validate Security Data
-* Validation Execution Layer
-* Authentication Validation
-* SQL Validation
-* XSS Validation
-* Validation Evidence Collection
-* Validation Analytics
-* Validation Scoring
-* Exploitability Assessment
-* Login Endpoint Verification
-* Enhanced Function Discovery
-* Extended Dashboard Metrics
-* Extended Report Schema
+- Function-based surface extraction
+- Semantic attack surface classification
+- Confidence-based prioritization
 
 ---
 
-## 📄 Report Output
+## 🕸️ Graph-Based Security Modeling
 
-Generated report includes:
+- Attack surface graph construction
+- Node-edge security relationship modeling
+- Multi-step attack path representation
 
-* Attack Surface Inventory
-* Test Plan
-* OWASP Mapping
-* Validation Results
-* Validation Summary
-* Exploitability Results
-* Coverage Analytics
-* Risk Distribution
-* Security Posture
-* Executive Dashboard
+---
 
-Output:
+## 🔥 Exploit Path Engine
 
+- Automatic attack chain discovery
+- Multi-step exploitation path analysis
+- Risk-ranked exploit path generation
+
+---
+
+## 🧪 Security Assessment
+
+- SQL injection surface detection
+- XSS reflection analysis
+- Authentication surface discovery
+- Business logic surface modeling
+
+---
+
+## 📊 Security Analytics
+
+- Risk distribution analysis
+- Coverage evaluation
+- Security posture scoring
+- Validation analytics
+
+---
+
+## 📄 Reporting & Visualization
+
+- Structured JSON reporting
+- OWASP Top 10 mapping
+- Executive dashboard generation
+- Exploitability scoring integration
+
+---
+
+# 📦 Version History
+
+## 🟢 v0.x — WordPress Era
+
+- WordPress-specific scanning engine
+- Static vulnerability detection
+- Linear workflow pipeline
+- Basic OWASP mapping
+
+---
+
+## 🔵 v1.0 — Web Application Security Intelligence Engine
+
+- Full framework abstraction layer
+- Application classification system
+- Graph-based attack surface modeling
+- Exploit path engine (multi-step attack chains)
+- Multi-target support (DVWA, Juice Shop, WebGoat)
+- Security reasoning pipeline architecture
+- Backward compatibility preserved for WordPress modules
+
+---
+
+# 📄 Output
+
+Generated standardized report is stored at:
 ```text
 output/report.json
 ```
 
----
+## Report includes:
 
-## ⚠️ Safety Model
+- Attack Surface Graph
+- Exploit Paths (attack chains)
+- Risk Scoring
+- OWASP Mapping
+- Validation Results
+- Security Posture Metrics
+- Coverage Analytics
+- Executive Dashboard Data
 
-Local WPCTF is designed for:
 
-* Local laboratory environments
-* Educational security testing
-* Controlled WordPress targets
-* Defensive security validation
+# ⚠️ Safety Model
 
-The framework does not perform:
+## Local WPCTF is designed for:
 
-* Credential brute forcing
-* Database dumping
-* Destructive exploitation
-* Unauthorized target testing
+- Local laboratory environments
+- Educational security testing
+- Controlled and authorized applications
+- Defensive security validation
+
+## The framework does NOT perform:
+
+- Unauthorized external scanning
+- Credential brute forcing
+- Destructive exploitation
+- Data exfiltration attacks

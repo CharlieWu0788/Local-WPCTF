@@ -14,6 +14,8 @@ from workflow.pipeline_checker import validate_pipeline
 from workflow.validation_execution import execute_validation
 from workflow.exploit_simulation import run_exploitability_analysis
 
+from workflow.exploit_path_engine import ExploitPathEngine
+
 from reports.owasp_mapper import classify_test_plan
 from reports.json_report import generate_report
 from reports.risk_engine import rank_attack_surface
@@ -58,10 +60,31 @@ def main():
     functions = discover_functions(scan_results)
 
     print("[*] Building attack surface...")
-    attack_surface = build_attack_surface(
+    surface_result = build_attack_surface(
         functions,
         auth_result
     )
+
+    # =========================================================
+    # V1.0 NEW: ATTACK GRAPH + EXPLOIT PATH ENGINE
+    # =========================================================
+
+    print("[*] Building attack graph...")
+    attack_graph = surface_result["graph"]
+
+    print("[*] Extracting exploit paths...")
+    engine = ExploitPathEngine(attack_graph)
+    exploit_paths = engine.build_paths()
+
+    # attach to surface result (backward compatible)
+    attack_surface = surface_result["surface_list"]
+
+    # enrich attack surface with exploit paths
+    enriched_attack_surface = {
+        "surface_list": attack_surface,
+        "graph": attack_graph,
+        "exploit_paths": exploit_paths
+    }
 
     print("[*] Generating test plan...")
     test_plan = generate_test_plan(
@@ -74,7 +97,7 @@ def main():
     )
 
     print("[*] Ranking attack surface...")
-    attack_surface = rank_attack_surface(
+    attack_surface_ranked = rank_attack_surface(
         attack_surface,
         owasp_report["owasp"]
     )
@@ -91,27 +114,27 @@ def main():
 
     print("[*] Running exploitability analysis...")
     exploitability_results = run_exploitability_analysis(
-        attack_surface,
+        attack_surface_ranked,
         validation_results
     )
 
     validate_pipeline(
         scan_results,
         functions,
-        attack_surface,
+        attack_surface_ranked,
         test_plan,
         owasp_report
     )
 
     print("[*] Running coverage analysis...")
     coverage_result = analyze_coverage(
-        attack_surface,
+        attack_surface_ranked,
         test_plan
     )
 
     print("[*] Running risk analytics...")
     risk_result = analyze_risk(
-        attack_surface
+        attack_surface_ranked
     )
 
     print("[*] Analyzing security posture...")
@@ -133,7 +156,7 @@ def main():
 
     report = generate_report(
         url,
-        attack_surface,
+        enriched_attack_surface,   # 🔥 NEW: graph + paths included
         test_plan,
         owasp_report["owasp"],
         coverage_result,

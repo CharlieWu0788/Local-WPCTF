@@ -1,129 +1,139 @@
 from reports.confidence_scoring import score_attack_surface
+from workflow.attack_graph import AttackGraph, AttackNode
 
 
 def build_attack_surface(functions, auth_result=None):
     """
-    Build attack surfaces from discovered functions.
+    Build attack surface graph from discovered functions.
 
-    v0.5.3 Upgrade:
-    - Adds confidence scoring
-    - Supports extensible surface mapping
-    - Prepares for OWASP + Raptor pipeline
+    V1.0 Upgrade:
+    - Converts flat surface list into graph structure
+    - Enables dependency modeling between surfaces
+    - Prepares for exploit chain analysis
     """
 
+    graph = AttackGraph()
     attack_surface = []
 
-    for function in functions:
+    previous_node_id = None
 
-        func_name = function.get("function", "")
+    for i, function in enumerate(functions):
+
+        func_name = function.get("function", "").lower()
         target = function.get("target", "")
 
-        surface = None
+        node_id = f"node_{i}_{func_name}"
+
+        surface_type = None
+        possible_tests = []
 
         # -----------------------------
-        # 1. Authentication Surface
+        # Authentication Surface
         # -----------------------------
-        if func_name == "login":
+        if func_name in ["login", "signin", "auth"]:
 
-            surface = {
-                "type": "authentication",
-                "target": target,
-                "possible_tests": [
-                    "weak_password",
-                    "auth_bypass",
-                    "session_management"
-                ]
-            }
+            surface_type = "authentication_surface"
+            possible_tests = [
+                "weak_password_testing",
+                "authentication_bypass",
+                "session_management"
+            ]
 
         # -----------------------------
-        # 2. WordPress Admin Surface
+        # Content Surface
         # -----------------------------
-        elif func_name == "wordpress_admin":
+        elif func_name in ["blog", "post", "content", "comment"]:
 
-            surface = {
-                "type": "wordpress",
-                "target": target,
-                "possible_tests": [
-                    "plugin_enumeration",
-                    "version_detection"
-                ]
-            }
+            surface_type = "content_surface"
+            possible_tests = [
+                "stored_xss",
+                "html_injection"
+            ]
 
         # -----------------------------
-        # 3. Blog / Content Surface
-        # -----------------------------
-        elif func_name in ["blog", "post", "content"]:
-
-            surface = {
-                "type": "content_management",
-                "target": target,
-                "possible_tests": [
-                    "stored_xss",
-                    "content_injection"
-                ]
-            }
-
-        # -----------------------------
-        # 4. Information Exposure Surface
+        # Information Surface
         # -----------------------------
         elif func_name in ["about", "faq", "info"]:
 
-            surface = {
-                "type": "information_disclosure",
-                "target": target,
-                "possible_tests": [
-                    "sensitive_information_exposure",
-                    "information_leakage"
-                ]
-            }
+            surface_type = "information_surface"
+            possible_tests = [
+                "information_disclosure",
+                "debug_exposure"
+            ]
 
         # -----------------------------
-        # 5. User Enumeration Surface
+        # User Surface
         # -----------------------------
-        elif func_name in ["author", "user", "profile"]:
+        elif func_name in ["user", "profile", "account"]:
 
-            surface = {
-                "type": "user_enumeration",
-                "target": target,
-                "possible_tests": [
-                    "user_disclosure",
-                    "username_enumeration"
-                ]
-            }
+            surface_type = "user_surface"
+            possible_tests = [
+                "user_enumeration",
+                "privilege_escalation"
+            ]
 
         # -----------------------------
-        # 6. Business Logic Surface
+        # Business Logic Surface
         # -----------------------------
         elif func_name in ["shop", "checkout", "payment"]:
 
-            surface = {
-                "type": "business_function",
-                "target": target,
-                "possible_tests": [
-                    "workflow_bypass",
-                    "parameter_tampering",
-                    "price_manipulation",
-                    "access_control"
-                ]
-            }
+            surface_type = "business_surface"
+            possible_tests = [
+                "workflow_bypass",
+                "parameter_tampering"
+            ]
 
-        # -----------------------------
-        # Skip unknown functions
-        # -----------------------------
         else:
-            continue
+            surface_type = "generic_surface"
+            possible_tests = [
+                "input_fuzzing",
+                "injection_detection"
+            ]
 
         # -----------------------------
-        # Confidence Scoring (NEW)
+        # Create Graph Node
         # -----------------------------
-        surface["confidence"] = score_attack_surface(surface, auth_result)
+        node = AttackNode(
+            node_id=node_id,
+            node_type=surface_type,
+            target=target
+        )
 
-        attack_surface.append(surface)
+        node.add_attribute("function", func_name)
+        node.add_attribute("possible_tests", possible_tests)
 
-    # -----------------------------
-    # Optional: sort by confidence
-    # (useful for next-stage planner)
-    # -----------------------------
-    attack_surface.sort(key=lambda x: x.get("confidence", 0), reverse=True)
+        # Confidence scoring (still reused)
+        confidence = score_attack_surface(
+            {
+                "type": surface_type,
+                "target": target,
+                "possible_tests": possible_tests
+            },
+            auth_result
+        )
 
-    return attack_surface
+        node.add_attribute("confidence", confidence)
+
+        graph.add_node(node)
+
+        # -----------------------------
+        # Create edges (simple flow model)
+        # -----------------------------
+        if previous_node_id:
+            graph.add_edge(previous_node_id, node_id)
+
+        previous_node_id = node_id
+
+        # Keep backward compatibility output
+        attack_surface.append({
+            "id": node_id,
+            "type": surface_type,
+            "target": target,
+            "confidence": confidence,
+            "possible_tests": possible_tests
+        })
+
+    return {
+        "graph": graph.to_dict(),
+        "surface_list": attack_surface
+    }
