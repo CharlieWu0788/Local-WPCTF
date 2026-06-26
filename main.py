@@ -63,14 +63,14 @@ def main():
     # Tree Mode (fast exit)
     # -------------------------
     if args.mode == "tree":
-        print("[*] Running Tree View Mode\n")
+        print("[*] Running Tree View Mode")
         tree(".")
         return
 
     # -------------------------
     # Scan Mode
     # -------------------------
-    print("[*] Scan Mode\n")
+    print("[*] Running Scan Mode")
 
     with open("config.json", "r", encoding="utf-8") as f:
         config = json.load(f)
