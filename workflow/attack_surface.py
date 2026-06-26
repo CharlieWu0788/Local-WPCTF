@@ -144,11 +144,15 @@ def build_attack_surface(functions, auth_result=None):
             "capability": capability,
             "target": target,
             "confidence": confidence,
-            "possible_tests": possible_tests
+            "possible_tests": possible_tests,
+
+            "source_scanner": function.get("source_scanner", "unknown"),
+            "discovery_reason": function.get("discovery_reason", "N/A"),
+            "metadata": function.get("metadata", {})
         })
 
     return {
-        "schema_version": "v1.0.1",
+        "schema_version": "v1.1.0",
         "graph": graph.to_dict(),
         "surface_list": attack_surface
     }

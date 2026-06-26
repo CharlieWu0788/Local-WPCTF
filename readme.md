@@ -1,10 +1,10 @@
-# 🛡️ Local WPCTF (V1.0.1)
+# 🛡️ Local WPCTF (V1.1.0)
 
 ## 🎯 Overview
 
 Local Web Page CTF is a modular **Web Application Security Assessment Framework** designed for black-box security analysis, attack surface modeling, and exploitability reasoning across modern web applications.
 
-Unlike earlier WordPress-focused versions, V1.0 introduces a **framework-agnostic security engine** capable of analyzing diverse targets such as:
+Unlike earlier WordPress-focused versions, V1.1 introduces a **framework-agnostic security engine** capable of analyzing diverse targets such as:
 
 - 🧩 WordPress applications
 - 🧪 DVWA
@@ -16,9 +16,9 @@ The framework focuses on **structured security reasoning**, not signature-based 
 
 ---
 
-## 🧠 Core Design Philosophy (V1.0.1)
+## 🧠 Core Design Philosophy (V1.1.0)
 
-Local WPCTF V1.0.1 is built around a layered reasoning pipeline:
+Local WPCTF V1.1.0 is built around a layered reasoning pipeline:
 
 - 🔍 From discovery → modeling → reasoning → exploit path analysis
 - 🧬 From isolated vulnerabilities → attack chains
@@ -28,7 +28,7 @@ The goal is not just detection, but **security understanding through structure**
 
 ---
 
-## 🏗️ Architecture (V1.0.1)
+## 🏗️ Architecture (V1.1.0)
 
 ```text
 🎯 Target Application
@@ -64,48 +64,69 @@ The goal is not just detection, but **security understanding through structure**
 
 ```text
 Local WPCTF/
-
-├── main.py
-├── config.json
-├── requirements.txt
-│
-├── core/
-│   ├── app_context.py
-│   ├── app_classifier.py
-│
-├── scanners/
-│   ├── auth_scan.py
-│   ├── sql_scan.py
-│   ├── xss_scan.py
-│   ├── wordpress_scan.py (legacy plugin module)
-│
-├── workflow/
-│   ├── function_discovery.py
-│   ├── attack_surface.py
-│   ├── attack_graph.py
-│   ├── exploit_path_engine.py
-│   ├── test_plan.py
-│   ├── validation_execution.py
-│   ├── pipeline_checker.py
-│
-├── analysis/
+├── .vscode
+│   └── launch.json
+├── analysis
+│   ├── __init__.py
 │   ├── coverage_analyzer.py
+│   ├── exploitability_engine.py
 │   ├── posture_analyzer.py
 │   ├── risk_analytics.py
-│   ├── validation_analytics.py
-│
-├── reports/
+│   └── validation_analytics.py
+├── config.json
+├── core
+│   ├── app_classifier.py
+│   ├── app_context.py
+│   └── schema
+│       ├── __init__.py
+│       ├── graph_schema.py
+│       ├── safe_wrap.py
+│       └── scanner_schema.py
+├── executors
+│   ├── __init__.py
+│   ├── auth_executor.py
+│   ├── sql_executor.py
+│   └── xss_executor.py
+├── main.py
+├── output
+│   └── report.json
+├── readme.md
+├── reports
+│   ├── __init__.py
 │   ├── confidence_scoring.py
 │   ├── dashboard_generator.py
 │   ├── json_report.py
 │   ├── owasp_mapper.py
+│   ├── risk_assessor.py
 │   ├── risk_engine.py
-│
-└── output/
-    └── report.json
+│   └── security_graph_dashboard.py
+├── requirements.txt
+├── scanners
+│   ├── __init__.py
+│   ├── api_scan.py
+│   ├── auth_scan.py
+│   ├── cookie_scan.py
+│   ├── directory_scan.py
+│   ├── header_scan.py
+│   ├── sql_scan.py
+│   ├── upload_scan.py
+│   ├── wordpress_scan.py (legacy plugin module)
+│   └── xss_scan.py
+├── tools
+│   └── tree_view.py
+└── workflow
+    ├── __init__.py
+    ├── attack_graph.py
+    ├── attack_surface.py
+    ├── exploit_path_engine.py
+    ├── exploit_simulation.py
+    ├── function_discovery.py
+    ├── pipeline_checker.py
+    ├── test_plan.py
+    └── validation_execution.py
 ```
 
-## 🚀 Key Features (V1.0.1)
+## 🚀 Key Features (V1.1.0)
 
 ### 🔍 Application Intelligence
 
@@ -189,6 +210,14 @@ Local WPCTF/
 
 ---
 
+### 🟣 v1.1 — Generic Scanner Expansion
+
+- 🏗️ Prepared generic scanner project structure
+- 🔌 Introduced placeholder modules for future discovery scanners
+- 📦 Established foundation for framework-agnostic scanner expansion
+
+---
+
 ## 📄 Output
 
 Generated standardized report is stored at:
@@ -232,8 +261,9 @@ output/report.json
 
 ## 🧭 Project Status
 
-### 🟢 Current Version: V1.0.1
+### 🟢 Current Version: V1.1.0
 
+- Generic scanner project structure prepared
 - Schema-safe pipeline architecture
 - Graph-based attack modeling system
 - Unified security reasoning engine
@@ -243,20 +273,31 @@ output/report.json
 
 ## 🚀 Future Direction (Planned)
 
-### 🔵 V1.1 Enhancements
+### 🔵 Upcoming V1.1 Releases
 
-- 🧠 Exploit path chaining optimization
-- 🕸️ Multi-surface correlation scoring
-- 📊 Graph centrality risk weighting
-- 🔍 Automatic OWASP refinement engine
-- ⚙️ Schema contract registry system
+#### V1.1.1
+- Generic scanner schema
+
+#### V1.1.2
+- Safe wrapper upgrade
+
+#### V1.1.3
+- Generic scanner implementation
+
+#### V1.1.4
+- Scanner integration
+
+#### V1.1.5
+- Attack surface expansion
 
 ---
 
 ## 🏁 Summary
 
-Local WPCTF V1.0.1 represents a transition from:
+Local WPCTF V1.1.0 continues the transition from:
 
 > **tool-based scanning → structured security intelligence system**
+
+V1.1 establishes the foundation for a generic, framework-agnostic scanner architecture that enables future attack surface expansion across diverse web applications.
 
 It is designed to evolve into a full **security reasoning engine**, not just a scanner.

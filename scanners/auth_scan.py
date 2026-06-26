@@ -15,7 +15,7 @@ def normalize_login_url(url):
 
 def scan_authentication(url):
     """
-    Auth Scan v0.5.0
+    Auth Scan v1.1.0
 
     Layers:
     - Link discovery

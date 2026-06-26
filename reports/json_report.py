@@ -21,7 +21,7 @@ def generate_report(
     return {
         "metadata": {
             "framework": "Local WPCTF",
-            "version": "v0.7.1",
+            "version": "v1.1.0",
             "target": target_url,
             "timestamp": datetime.utcnow().isoformat() + "Z"
         },

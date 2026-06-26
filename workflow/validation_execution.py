@@ -12,15 +12,6 @@ from executors.xss_executor import (
 
 
 def execute_validation(test_plan):
-    """
-    Execute validation layer.
-
-    V0.7:
-    - Consumes generated test plan
-    - Dispatches safe validation tasks
-    - Collects validation evidence
-    - Does NOT perform exploitation
-    """
 
     results = []
 

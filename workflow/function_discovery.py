@@ -1,3 +1,15 @@
+
+LINK_FUNCTION_MAP = {
+    ("blog",): "blog",
+    ("about",): "about",
+    ("faq", "faqs"): "faq",
+    ("author", "authors"): "author",
+    ("shop", "store"): "shop",
+    ("profile", "account"): "profile",
+    ("admin", "dashboard"): "admin_panel",
+    ("search",): "search",
+}
+
 def discover_functions(
     scan_results,
     app_context=None
@@ -40,7 +52,10 @@ def discover_functions(
 
             functions.append({
                 "function": "login",
-                "target": login_url
+                "target": login_url,
+                "source_scanner": "auth_scan",
+                "discovery_reason": "Login page detected",
+                "metadata": {}
             })
 
     # =====================================================
@@ -55,7 +70,10 @@ def discover_functions(
 
             functions.append({
                 "function": "wordpress_admin",
-                "target": "/wp-admin"
+                "target": "/wp-admin",
+                "source_scanner": "wordpress_scan",
+                "discovery_reason": "WordPress admin endpoint",
+                "metadata": {}
             })
 
     # =====================================================
@@ -70,20 +88,28 @@ def discover_functions(
     ]:
 
         functions.extend([
-
             {
                 "function": "security_training",
-                "target": "/"
+                "target": "/",
+                "source_scanner": "platform_detection",
+                "discovery_reason": "Training platform profile",
+                "metadata": {}
             },
 
             {
                 "function": "user_management",
-                "target": "/login"
+                "target": "/login",
+                "source_scanner": "platform_detection",
+                "discovery_reason": "Training platform profile",
+                "metadata": {}
             },
 
             {
                 "function": "vulnerability_module",
-                "target": "/"
+                "target": "/",
+                "source_scanner": "platform_detection",
+                "discovery_reason": "Training platform profile",
+                "metadata": {}
             }
 
         ])
@@ -96,7 +122,10 @@ def discover_functions(
 
         functions.append({
             "function": "web_application",
-            "target": "/"
+            "target": "/",
+            "source_scanner": "generic_detection",
+            "discovery_reason": "Generic web application",
+            "metadata": {}
         })
 
     # =====================================================
@@ -122,73 +151,25 @@ def discover_functions(
             ""
         )
 
-        if text == "blog":
+        matched_function = None
+
+        for keywords, function_name in LINK_FUNCTION_MAP.items():
+
+            if text in keywords:
+                matched_function = function_name
+                break
+
+        if matched_function:
 
             functions.append({
-                "function": "blog",
-                "target": url
+                "function": matched_function,
+                "target": url,
+                "source_scanner": "auth_scan",
+                "discovery_reason": "Navigation link discovered",
+                "metadata": {
+                    "link_text": text
+                }
             })
-
-        elif text == "about":
-
-            functions.append({
-                "function": "about",
-                "target": url
-            })
-
-        elif text in [
-            "faq",
-            "faqs"
-        ]:
-
-            functions.append({
-                "function": "faq",
-                "target": url
-            })
-
-        elif text in [
-            "author",
-            "authors"
-        ]:
-
-            functions.append({
-                "function": "author",
-                "target": url
-            })
-
-        elif text in [
-            "shop",
-            "store"
-        ]:
-
-            functions.append({
-                "function": "shop",
-                "target": url
-            })
-
-        elif text in [
-            "profile",
-            "account"
-        ]:
-
-            functions.append({
-                "function": "profile",
-                "target": url
-            })
-
-        elif text in [
-            "admin",
-            "dashboard"
-        ]:
-
-            functions.append({
-                "function": "admin_panel",
-                "target": url
-            })
-
-        elif text in [
-            "search"
-        ]:
 
             functions.append({
                 "function": "search",
@@ -226,7 +207,10 @@ def discover_functions(
 
         functions.append({
             "function": "web_application",
-            "target": "/"
+            "target": "/",
+            "source_scanner": "fallback",
+            "discovery_reason": "No functions discovered",
+            "metadata": {}
         })
 
     return unique_functions

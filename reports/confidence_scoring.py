@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 
 def score_attack_surface(surface, auth_result=None):
     """
-    Attack Surface Confidence Scoring v0.5.3
+    Attack Surface Confidence Scoring v1.1.0
 
     Output: 0.0 ~ 1.0
     """
