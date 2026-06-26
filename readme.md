@@ -1,4 +1,4 @@
-# 🛡️ Local WPCTF (V1.1.0)
+# 🛡️ Local WPCTF (V1.1.1)
 
 ## 🎯 Overview
 
@@ -210,13 +210,19 @@ Local WPCTF/
 
 ---
 
-### 🟣 v1.1 — Generic Scanner Expansion
+### 🟣 v1.1.0 — Generic Scanner Expansion
 
 - 🏗️ Prepared generic scanner project structure
 - 🔌 Introduced placeholder modules for future discovery scanners
 - 📦 Established foundation for framework-agnostic scanner expansion
 
 ---
+
+### 🔵 v1.1.1
+
+- 🧩 Introduced a unified generic scanner schema
+- 🔄 Preserved backward compatibility with V1.0.x scanners
+- 🛡️ Established a common contract for future discovery scanners
 
 ## 📄 Output
 
@@ -261,9 +267,9 @@ output/report.json
 
 ## 🧭 Project Status
 
-### 🟢 Current Version: V1.1.0
+### 🟢 Current Version: V1.1.1
 
-- Generic scanner project structure prepared
+- Generic scanner schema introduced
 - Schema-safe pipeline architecture
 - Graph-based attack modeling system
 - Unified security reasoning engine
@@ -274,9 +280,6 @@ output/report.json
 ## 🚀 Future Direction (Planned)
 
 ### 🔵 Upcoming V1.1 Releases
-
-#### V1.1.1
-- Generic scanner schema
 
 #### V1.1.2
 - Safe wrapper upgrade
