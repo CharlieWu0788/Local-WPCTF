@@ -1,8 +1,8 @@
 {
-    "version": "1.0.1",
+    "version": "1.1.1",
     "configurations": [
         {
-            "name": "WPCTF - Scan Mode (F5)",
+            "name": "WPCTF - Scan Mode",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/main.py",
@@ -11,7 +11,7 @@
             "justMyCode": true
         },
         {
-            "name": "WPCTF - Tree Mode (Ctrl+F5)",
+            "name": "WPCTF - Tree Mode",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/main.py",
@@ -21,4 +21,3 @@
         }
     ]
 }
-//Debug: Select and Start Debugging

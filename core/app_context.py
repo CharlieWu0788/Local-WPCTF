@@ -3,107 +3,85 @@ from typing import Dict, Any, List, Optional
 
 class AppContext:
     """
-    Core context object for Web Application Security Assessment Framework (V1.0).
+    Central State Store (WPCTF V1.1+)
 
-    This object represents a normalized view of any target application,
-    decoupling scanners and workflow logic from framework-specific assumptions
-    (e.g., WordPress).
+    Purpose:
+    - Single source of truth for all scan/analysis/attack results
+    - Decouple modules from parameter passing
     """
 
     def __init__(self, target_url: str):
-        # Target application entry point
+
         self.target_url: str = target_url
 
-        # Application classification result (e.g., wordpress, dvwa, generic)
+        # Core classification
         self.app_type: str = "unknown"
+        self.classification: Dict[str, Any] = {}
 
-        # Detected or inferred technology stack
+        # Runtime info
         self.framework: Optional[str] = None
-
-        # Authentication model (session-based, JWT, OAuth, etc.)
         self.auth_model: Optional[str] = None
 
-        # Discovered endpoints (URLs, APIs, pages)
+        # Data stores
         self.endpoints: List[str] = []
-
-        # Input surface model (parameters, headers, body fields)
-        self.input_surface: Dict[str, Any] = {}
-
-        # Attack surface graph (logical representation of components)
-        self.attack_surface: Dict[str, Any] = {}
-
-        # Scanner outputs (normalized results)
         self.scan_results: Dict[str, Any] = {}
 
-        # Execution metadata (runtime info, timing, etc.)
-        self.metadata: Dict[str, Any] = {}
+        # Analysis outputs (IMPORTANT)
+        self.analysis: Dict[str, Any] = {}
 
-        # Risk aggregation results
+        # Risk / security profile
         self.risk_profile: Dict[str, Any] = {}
 
+        # Metadata
+        self.metadata: Dict[str, Any] = {}
+
+    # -------------------------
+    # Core setters
+    # -------------------------
     def set_app_type(self, app_type: str) -> None:
-        """
-        Set detected application type.
-        """
         self.app_type = app_type
 
-    def set_framework(self, framework: str) -> None:
-        """
-        Set detected backend/framework type.
-        """
-        self.framework = framework
+    def set_classification(self, classification: Dict[str, Any]) -> None:
+        self.classification = classification
+
+    # -------------------------
+    # Data ingestion
+    # -------------------------
+    def add_scan_result(self, key: str, value: Any) -> None:
+        self.scan_results[key] = value
 
     def add_endpoint(self, endpoint: str) -> None:
-        """
-        Add a discovered endpoint to the context.
-        """
         if endpoint not in self.endpoints:
             self.endpoints.append(endpoint)
 
-    def update_input_surface(self, key: str, value: Any) -> None:
-        """
-        Update input surface model (parameters, forms, APIs).
-        """
-        self.input_surface[key] = value
-
-    def update_attack_surface(self, key: str, value: Any) -> None:
-        """
-        Update attack surface graph representation.
-        """
-        self.attack_surface[key] = value
-
-    def add_scan_result(self, scanner_name: str, result: Any) -> None:
-        """
-        Store scanner output in normalized format.
-        """
-        self.scan_results[scanner_name] = result
-
-    def update_metadata(self, key: str, value: Any) -> None:
-        """
-        Store runtime or execution metadata.
-        """
-        self.metadata[key] = value
+    # -------------------------
+    # Analysis layer
+    # -------------------------
+    def add_analysis(self, key: str, value: Any) -> None:
+        self.analysis[key] = value
 
     def update_risk_profile(self, key: str, value: Any) -> None:
-        """
-        Store risk analysis results.
-        """
         self.risk_profile[key] = value
 
+    # -------------------------
+    # Metadata
+    # -------------------------
+    def update_metadata(self, key: str, value: Any) -> None:
+        self.metadata[key] = value
+
+    # -------------------------
+    # Export
+    # -------------------------
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Convert full context into a serializable dictionary.
-        Used for reporting layer (report.json).
-        """
         return {
             "target_url": self.target_url,
             "app_type": self.app_type,
+            "classification": self.classification,
             "framework": self.framework,
             "auth_model": self.auth_model,
             "endpoints": self.endpoints,
-            "input_surface": self.input_surface,
-            "attack_surface": self.attack_surface,
             "scan_results": self.scan_results,
-            "metadata": self.metadata,
+            "analysis": self.analysis,
             "risk_profile": self.risk_profile,
+            "metadata": self.metadata,
         }

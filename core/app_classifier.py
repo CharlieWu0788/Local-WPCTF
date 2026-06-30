@@ -3,97 +3,139 @@ from typing import Dict, Any
 
 class AppClassifier:
     """
-    Application Classification Engine (V1.0)
+    Structured Application Classifier (V2.1)
 
     Purpose:
-    - Identify target application category
-    - Remove WordPress-only assumptions
-    - Support future web targets
+    - Classify target application type
+    - Fuse evidence from multiple scanners
+    - Return confidence and classification metadata
 
-    Output examples:
-        wordpress
-        training_platform
-        generic_web
+    Notes:
+    - This classifier does NOT decide attack strategy.
+    - Attack planning belongs to the workflow layer.
     """
 
-    def classify(self, scan_results: Dict[str, Any]) -> str:
+    def classify(self, scan_results: Dict[str, Any]) -> Dict[str, Any]:
 
-        # ----------------------------------
-        # WordPress Detection
-        # ----------------------------------
+        wordpress_result = scan_results.get("wordpress", {})
+        auth_result = scan_results.get("auth", {})
+        api_result = scan_results.get("api", {})
+        header_result = scan_results.get("header", {})
 
-        wordpress_result = scan_results.get(
-            "wordpress",
-            {}
-        )
+        score = 0.0
+        evidence = []
+        tags = []
 
-        if wordpress_result.get(
-            "wordpress_detected",
-            False
-        ):
-            return "wordpress"
+        # -------------------------------------------------
+        # WordPress Scanner
+        # -------------------------------------------------
 
-        # ----------------------------------
-        # Authentication Fingerprints
-        # ----------------------------------
+        if wordpress_result.get("wordpress_detected", False):
+            score += 0.60
+            evidence.append("wordpress_signature")
+            tags.append("wordpress")
 
-        auth_result = scan_results.get(
-            "auth",
-            {}
-        )
+        # -------------------------------------------------
+        # Authentication Scanner
+        # -------------------------------------------------
 
-        login_urls = auth_result.get(
-            "login_urls",
-            []
-        )
+        login_urls = auth_result.get("login_urls", [])
 
-        # V1 CLEAN: assume schema layer guarantees list
-        login_text = " ".join(
-            str(x).lower()
-            for x in login_urls
-        )
+        for url in login_urls:
+            lower_url = str(url).lower()
 
-        # ----------------------------------
-        # DVWA
-        # ----------------------------------
+            if "wp-login.php" in lower_url:
+                score += 0.25
+                evidence.append("wp_login_detected")
+                tags.append("wordpress")
+                break
 
-        if "dvwa" in login_text:
-            return "training_platform"
+        # -------------------------------------------------
+        # Link Evidence
+        # -------------------------------------------------
 
-        # ----------------------------------
-        # Juice Shop
-        # ----------------------------------
+        discovered_links = auth_result.get("discovered_links", [])
 
-        if "juice" in login_text:
-            return "training_platform"
+        for item in discovered_links:
 
-        # ----------------------------------
-        # WebGoat
-        # ----------------------------------
+            if isinstance(item, dict):
+                text = str(item.get("text", "")).lower()
+                url = str(item.get("url", "")).lower()
+            else:
+                text = str(item).lower()
+                url = ""
 
-        if "webgoat" in login_text:
-            return "training_platform"
+            if "wordpress" in text or "wordpress.org" in url:
+                score += 0.15
+                evidence.append("wordpress_reference")
+                tags.append("wordpress")
+                break
 
-        # ----------------------------------
-        # Mutillidae
-        # ----------------------------------
+        # -------------------------------------------------
+        # REST API Fingerprint (Future)
+        # -------------------------------------------------
 
-        if "mutillidae" in login_text:
-            return "training_platform"
+        if api_result.get("wordpress_api_detected", False):
+            score += 0.20
+            evidence.append("wp_rest_api")
+            tags.append("wordpress")
 
-        # ----------------------------------
-        # Default
-        # ----------------------------------
+        # -------------------------------------------------
+        # HTTP Header Fingerprint (Future)
+        # -------------------------------------------------
 
-        return "generic_web"
+        if header_result.get("wordpress_header_detected", False):
+            score += 0.15
+            evidence.append("wp_header")
+            tags.append("wordpress")
+
+        # -------------------------------------------------
+        # Training Platform Detection
+        # -------------------------------------------------
+
+        training_keywords = [
+            "dvwa",
+            "juice",
+            "juice shop",
+            "webgoat",
+            "mutillidae",
+        ]
+
+        login_text = " ".join(str(x).lower() for x in login_urls)
+
+        for keyword in training_keywords:
+
+            if keyword in login_text:
+                score += 0.40
+                evidence.append(f"{keyword}_detected")
+                tags.append("training_platform")
+
+        # -------------------------------------------------
+        # Decision
+        # -------------------------------------------------
+
+        score = min(score, 1.0)
+
+        if "wordpress" in tags and score >= 0.40:
+            app_type = "wordpress"
+
+        elif "training_platform" in tags:
+            app_type = "training_platform"
+
+        else:
+            app_type = "generic_web"
+
+        return {
+            "app_type": app_type,
+            "confidence": round(score, 2),
+            "evidence": sorted(set(evidence)),
+            "tags": sorted(set(tags)),
+            "attack_suggestions": []
+        }
 
 
-def classify_application(
-    scan_results: Dict[str, Any]
-) -> str:
-
-    classifier = AppClassifier()
-
-    return classifier.classify(
-        scan_results
-    )
+def classify_application(scan_results: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Convenience wrapper.
+    """
+    return AppClassifier().classify(scan_results)

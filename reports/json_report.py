@@ -1,56 +1,44 @@
 from datetime import datetime
 
 
-def generate_report(
-    target_url,
-    attack_surface,
-    test_plan,
-    owasp_findings,
-    coverage_result,
-    risk_result,
-    posture_result,
-    validation_results,
-    validation_summary,
-    exploitability_results,
-    dashboard_result
-):
+def generate_report(ctx: dict):
     """
-    Generate standardized assessment report.
+    Final Report Renderer
+    - NO computation
+    - NO business logic
+    - ONLY formatting
     """
 
     return {
         "metadata": {
             "framework": "Local WPCTF",
-            "version": "v1.1.0",
-            "target": target_url,
+            "version": ctx.get("metadata", {}).get("framework_version", "v1.1.0"),
+            "target": ctx.get("target_url"),
             "timestamp": datetime.utcnow().isoformat() + "Z"
         },
 
-        "summary": {
-            "attack_surface_count": len(attack_surface),
-            "test_count": len(test_plan),
-            "finding_count": len(owasp_findings),
-            "validated_count": validation_summary.get("validated", 0),
-            "high_risk_exploitability": len([
-                x for x in exploitability_results
-                if x.get("risk_level") == "high"
-            ])
-        },
+        # --------------------------
+        # Core classification
+        # --------------------------
+        "classification": ctx.get("classification"),
 
-        "attack_surface": attack_surface,
-        "test_plan": test_plan,
+        # --------------------------
+        # Scan results
+        # --------------------------
+        "scan_results": ctx.get("scan_results"),
 
-        "validation_results": validation_results,
-        "validation_summary": validation_summary,
+        # --------------------------
+        # Analysis layer (ALL scoring already done upstream)
+        # --------------------------
+        "analysis": ctx.get("analysis"),
 
-        "exploitability_results": exploitability_results,
+        # --------------------------
+        # Risk / posture already computed
+        # --------------------------
+        "risk_profile": ctx.get("risk_profile"),
 
-        "owasp": owasp_findings,
-
-        "analytics": {
-            "coverage": coverage_result,
-            "risk_distribution": risk_result,
-            "security_posture": posture_result,
-            "dashboard": dashboard_result
-        }
+        # --------------------------
+        # Endpoints
+        # --------------------------
+        "endpoints": ctx.get("endpoints"),
     }

@@ -1,158 +1,162 @@
 from workflow.attack_graph import AttackGraph, AttackNode
-from reports.confidence_scoring import score_attack_surface
 
 
-# -----------------------------
-# V1.0.1 Capability Mapping Layer
-# -----------------------------
+# =========================================================
+# Capability Mapping Layer
+# =========================================================
 CAPABILITY_MAP = {
-    "authentication": ["login", "signin", "auth", "logout"],
-    "content": ["blog", "post", "content", "comment"],
+    "authentication": ["login", "signin", "auth", "logout", "wp-login"],
+    "content": ["blog", "post", "content", "comment", "page"],
     "information": ["about", "faq", "info", "help"],
     "user": ["user", "profile", "account"],
-    "business": ["shop", "checkout", "payment"],
-    "api": ["api", "endpoint", "graphql", "rest"]
+    "business": ["shop", "checkout", "payment", "cart"],
+    "api": ["api", "endpoint", "graphql", "rest", "wp-json"],
+    "upload": ["upload", "file"]
 }
 
 
-def detect_capability(func_name: str):
+def detect_capability(text: str):
     """
-    V1.0.1 Generic capability detection layer
+    Map endpoint/text to capability type
     """
-
-    if not isinstance(func_name, str):
+    if not isinstance(text, str):
         return "generic"
 
-    func_name = func_name.lower()
+    text = text.lower()
 
     for capability, keywords in CAPABILITY_MAP.items():
-        if func_name in keywords:
+        if any(k in text for k in keywords):
             return capability
 
     return "generic"
 
 
-def build_attack_surface(functions, auth_result=None):
+# =========================================================
+# MAIN BUILDER (SCAN_RESULTS BASED)
+# =========================================================
+def build_attack_surface(scan_results: dict):
     """
-    Build attack surface graph (V1.0.1 safe version)
+    V2 Scan-Based Attack Surface Builder
+
+    Input:
+        scan_results (dict)
+
+    Output:
+        {
+            graph,
+            surface_list
+        }
     """
 
-    functions = functions or []
+    scan_results = scan_results or {}
 
     graph = AttackGraph()
     attack_surface = []
 
     previous_node_id = None
+    node_index = 0
 
-    for i, function in enumerate(functions):
+    # =========================================================
+    # Helper: create node
+    # =========================================================
+    def add_node(source, items, surface_type_prefix):
+        nonlocal node_index, previous_node_id
 
-        if not isinstance(function, dict):
-            continue
+        for item in items or []:
 
-        func_name = (function.get("function") or "").lower()
-        target = function.get("target", "")
+            node_id = f"node_{node_index}_{surface_type_prefix}"
 
-        node_id = f"node_{i}_{func_name}"
+            capability = detect_capability(
+                item.get("url") if isinstance(item, dict) else str(item)
+            )
 
-        # -----------------------------
-        # capability detection
-        # -----------------------------
-        capability = detect_capability(func_name)
-        surface_type = f"{capability}_surface"
+            node_type = f"{capability}_surface"
 
-        # -----------------------------
-        # test mapping
-        # -----------------------------
-        test_map = {
-            "authentication": [
-                "weak_password_testing",
-                "authentication_bypass",
-                "session_analysis"
-            ],
-            "content": [
-                "stored_xss",
-                "html_injection"
-            ],
-            "information": [
-                "information_disclosure",
-                "debug_exposure"
-            ],
-            "user": [
-                "user_enumeration",
-                "privilege_escalation"
-            ],
-            "business": [
-                "workflow_bypass",
-                "parameter_tampering"
-            ],
-            "api": [
-                "api_auth_bypass",
-                "rate_limit_testing"
-            ],
-            "generic": [
-                "input_fuzzing",
-                "injection_detection"
-            ]
-        }
+            node = AttackNode(
+                node_id=node_id,
+                node_type=node_type,
+                target=item.get("url") if isinstance(item, dict) else str(item)
+            )
 
-        possible_tests = test_map.get(capability, test_map["generic"])
+            node.add_attribute("capability", capability)
+            node.add_attribute("source", source)
+            node.add_attribute("raw", item)
 
-        # -----------------------------
-        # graph node
-        # -----------------------------
-        node = AttackNode(
-            node_id=node_id,
-            node_type=surface_type,
-            target=target
+            graph.add_node(node)
+
+            if previous_node_id:
+                graph.add_edge(previous_node_id, node_id)
+
+            previous_node_id = node_id
+
+            attack_surface.append({
+                "id": node_id,
+                "type": node_type,
+                "capability": capability,
+                "target": node.target,
+                "source_scanner": source,
+                "metadata": item if isinstance(item, dict) else {}
+            })
+
+            node_index += 1
+
+    # =========================================================
+    # 1. WordPress Surface
+    # =========================================================
+    wp = scan_results.get("wordpress", {})
+
+    if wp.get("wordpress_detected"):
+        add_node(
+            "wordpress",
+            [{"url": wp.get("final_url", "")}],
+            "wordpress"
         )
 
-        node.add_attribute("function", func_name)
-        node.add_attribute("capability", capability)
-        node.add_attribute("possible_tests", possible_tests)
-        node.add_attribute("position", i)
+    # =========================================================
+    # 2. Auth Surface
+    # =========================================================
+    auth = scan_results.get("auth", {})
 
-        # -----------------------------
-        # confidence scoring
-        # -----------------------------
-        confidence = score_attack_surface(
-            {
-                "type": surface_type,
-                "target": target,
-                "possible_tests": possible_tests
-            },
-            auth_result
+    add_node(
+        "auth_login_urls",
+        [{"url": u} for u in auth.get("login_urls", [])],
+        "auth"
+    )
+
+    add_node(
+        "auth_links",
+        auth.get("discovered_links", []),
+        "auth"
+    )
+
+    # =========================================================
+    # 3. SQL Surface
+    # =========================================================
+    sql = scan_results.get("sql", {})
+
+    add_node(
+        "sql_params",
+        [{"url": "parameter_based_scan"}] if sql.get("tested_payloads") else [],
+        "sql"
+    )
+
+    # =========================================================
+    # 4. XSS Surface
+    # =========================================================
+    xss = scan_results.get("xss", {})
+
+    if xss.get("tested_payloads"):
+        add_node(
+            "xss_payloads",
+            [{"url": "form_based_input"}],
+            "xss"
         )
 
-        node.add_attribute("confidence", confidence)
-
-        graph.add_node(node)
-
-        # -----------------------------
-        # graph edges
-        # -----------------------------
-        if previous_node_id:
-            graph.add_edge(previous_node_id, node_id)
-
-        previous_node_id = node_id
-
-        # -----------------------------
-        # output schema
-        # -----------------------------
-        attack_surface.append({
-            "id": node_id,
-            "type": surface_type,
-            "capability": capability,
-            "target": target,
-            "confidence": confidence,
-            "possible_tests": possible_tests,
-
-            "source_scanner": function.get("source_scanner", "unknown"),
-            "discovery_reason": function.get("discovery_reason", "N/A"),
-            "metadata": function.get("metadata", {})
-        })
-
+    # =========================================================
+    # Final Output
+    # =========================================================
     return {
-        "schema_version": "v1.1.0",
+        "schema_version": "v2.0.0",
         "graph": graph.to_dict(),
         "surface_list": attack_surface
     }

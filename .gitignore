@@ -12,6 +12,7 @@ venv/
 # Output artifacts
 output/
 logs/
+cache/
 *.log
 
 # Testing artifacts
